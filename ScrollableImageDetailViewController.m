@@ -23,13 +23,30 @@
 @synthesize nestedImageView = _nestedImageView;
 @synthesize image = _image;
 
+- (void)debugLog:(NSString*)caller
+{
+//	NSLog(@"[%@]z=%g,svb={%g,%g,%g,%g},svf={%g,%g,%g,%g},nivb={%g,%g,%g,%g},nivf={%g,%g,%g,%g}",
+//		  caller, self.scrollView.zoomScale,
+//		  self.scrollView.bounds.origin.x, self.scrollView.bounds.origin.y,
+//		  self.scrollView.bounds.size.width, self.scrollView.bounds.size.height,
+//		  self.scrollView.frame.origin.x, self.scrollView.frame.origin.y,
+//		  self.scrollView.frame.size.width, self.scrollView.frame.size.height,
+//		  self.nestedImageView.bounds.origin.x, self.nestedImageView.bounds.origin.y,
+//		  self.nestedImageView.bounds.size.width, self.nestedImageView.bounds.size.height,
+//		  self.nestedImageView.bounds.origin.x, self.nestedImageView.bounds.origin.y,
+//		  self.nestedImageView.bounds.size.width, self.nestedImageView.bounds.size.height
+//		  );
+}
+
 - (IBAction)doubleTap:(UITapGestureRecognizer*)gesture
 {
 	if (self.image && gesture.state == UIGestureRecognizerStateRecognized)
 	{
 		// this should cause it to bounce if it ends up greater than the max
+		[self debugLog:@"t2-pre"];
 		[self.scrollView setZoomScale:self.scrollView.zoomScale*1.25 animated:YES];
 		[self.scrollView setNeedsDisplay];
+		[self debugLog:@"t2-end"];
 	}
 }
 
@@ -37,31 +54,41 @@
 {
 	if (self.image && gesture.state == UIGestureRecognizerStateRecognized)
 	{
+		[self debugLog:@"t3-pre"];
 		[self.scrollView setZoomScale:1 animated:YES];
 		[self.scrollView setNeedsDisplay];
+		[self debugLog:@"t3-end"];
 	}	
 }
 
 - (void)nestImageInScrollView
 {
+	[self debugLog:@"ni-pre"];
 	if (_nestedImageView && [self.scrollView.subviews containsObject:_nestedImageView])
 	{
 		self.scrollView.zoomScale = 1;
 		[_nestedImageView removeFromSuperview];
 	}
+	[self debugLog:@"ni-cp1"];
 	
 	CGFloat widthScale = self.scrollView.bounds.size.width / self.image.size.width;
 	CGFloat heightScale = self.scrollView.bounds.size.height / self.image.size.height;
-	self.scrollView.minimumZoomScale = MIN(1.0, MIN(widthScale, heightScale));
-	self.scrollView.maximumZoomScale = 4.0;
 	self.scrollView.contentSize = _image.size;
-	
+
 	[self.scrollView addSubview:[[UIImageView alloc] initWithImage:self.image]];
 	_nestedImageView = self.scrollView.subviews.lastObject;
 	
+	[self debugLog:@"ni-cp2"];
+	
 	// must come after added to scrollView !!
+	self.scrollView.minimumZoomScale = MIN(1.0, MIN(widthScale, heightScale));
+	self.scrollView.maximumZoomScale = 4.0;
 	self.scrollView.zoomScale = MAX(widthScale, heightScale);
+
+	// must come after setZoomScale
 	self.scrollView.contentOffset = CGPointZero;
+	
+	[self debugLog:@"ni-end"];
 	
 	[self.doubleTapGesture requireGestureRecognizerToFail:self.tripleTapGesture];
 }
@@ -80,7 +107,7 @@
 
 - (UIView*)viewForZoomingInScrollView:(UIScrollView*)scrollView
 {
-	return self.scrollView.subviews.lastObject;
+	return self.nestedImageView;
 }
 
 - (void)resetSplitViewBarButtonTitle
@@ -118,13 +145,27 @@
     // Release any retained subviews of the main view.
 }
 
+- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
+{
+	// need all these values for zooming as done after the orientation
+	float zoomScale = self.scrollView.zoomScale;
+	float oldMinZoom = self.scrollView.minimumZoomScale;
+	CGFloat widthScale = self.scrollView.bounds.size.width / self.image.size.width;
+	CGFloat heightScale = self.scrollView.bounds.size.height / self.image.size.height;
+	
+	// just reset the zoom scales; leave center and everything else where possible
+	self.scrollView.minimumZoomScale = MIN(1.0, MIN(widthScale, heightScale));
+	self.scrollView.maximumZoomScale = 4.0;
+
+	if (zoomScale == oldMinZoom || zoomScale < self.scrollView.minimumZoomScale)
+		[self.scrollView setZoomScale:self.scrollView.minimumZoomScale animated:YES];
+	else if (zoomScale > self.scrollView.maximumZoomScale)
+		[self.scrollView setZoomScale:self.scrollView.maximumZoomScale animated:YES];
+}
+
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
-	    return (interfaceOrientation != UIInterfaceOrientationPortraitUpsideDown);
-	} else {
-	    return YES;
-	}
+	return YES;
 }
 
 #pragma mark - Split view
