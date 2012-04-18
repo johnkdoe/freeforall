@@ -6,14 +6,28 @@
 //  Copyright (c) 2012 xolaware. All rights reserved.
 //
 
+#pragma mark - imports
 #import "ImageTitleDescriptionDisclosureTableViewCell.h"
+#pragma mark -
 
 @implementation ImageTitleDescriptionDisclosureTableViewCell
 
+#pragma mark @synthesize
 @synthesize innerView = _innerView;
 @synthesize itddImageView = _itddImageView;
 @synthesize itddTitle = _itddTitle;
 @synthesize itddDescription = _itddDescription;
+
+@synthesize photoId = _photoId;
+
+- (BOOL)isEqual:(id)object
+{
+	return [object isKindOfClass:[ImageTitleDescriptionDisclosureTableViewCell class]]
+		&& [[object photoId] isEqualToString:self.photoId];
+		 
+}
+
+#pragma mark - UITableViewCell overrides
 
 - (id)initWithStyle:(UITableViewCellStyle)style
 	reuseIdentifier:(NSString *)reuseIdentifier
