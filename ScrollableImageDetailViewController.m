@@ -3,13 +3,14 @@
 //  XolawareUI
 //
 //  Created by me on 2012.04.07.
-//  Copyright (c) 2012 xolaware. All rights reserved.
-//
+
+#include "xolawareOpenSourceCopyright.h"	//  Copyright (c) 2012 xolaware.
 
 #import "ScrollableImageDetailViewController.h"
 #import "UIViewController+UISplitViewControllerUtilities.h"
 
 @interface ScrollableImageDetailViewController ()
+@property (strong, nonatomic) IBOutlet UITapGestureRecognizer *singleTapGesture;
 @property (strong, nonatomic) IBOutlet UITapGestureRecognizer *doubleTapGesture;
 @property (strong, nonatomic) IBOutlet UITapGestureRecognizer *tripleTapGesture;
 @property (weak, nonatomic) IBOutlet UIScrollView* scrollView;
@@ -17,6 +18,7 @@
 @end
 
 @implementation ScrollableImageDetailViewController
+@synthesize singleTapGesture = _singleTapGesture;
 @synthesize doubleTapGesture = _doubleTapGesture;
 @synthesize tripleTapGesture = _tripleTapGesture;
 @synthesize scrollView = _scrollView;
@@ -36,6 +38,9 @@
 //		  self.nestedImageView.bounds.origin.x, self.nestedImageView.bounds.origin.y,
 //		  self.nestedImageView.bounds.size.width, self.nestedImageView.bounds.size.height
 //		  );
+}
+- (IBAction)singleTap:(UITapGestureRecognizer *)sender
+{
 }
 
 - (IBAction)doubleTap:(UITapGestureRecognizer*)gesture
@@ -91,6 +96,7 @@
 	[self debugLog:@"ni-end"];
 	
 	[self.doubleTapGesture requireGestureRecognizerToFail:self.tripleTapGesture];
+	[self.singleTapGesture requireGestureRecognizerToFail:self.doubleTapGesture];
 }
 
 - (void)setImage:(UIImage*)uiImage
@@ -141,6 +147,7 @@
 	[self setScrollView:nil];		// automatically inserted by Xcode
 	[self setDoubleTapGesture:nil];	// automatically inserted by Xcode
 	[self setTripleTapGesture:nil];	// automatically inserted by Xcode
+	[self setSingleTapGesture:nil];	// automatically isnerted by Xcode
     [super viewDidUnload];
     // Release any retained subviews of the main view.
 }
