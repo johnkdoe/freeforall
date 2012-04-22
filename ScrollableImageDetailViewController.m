@@ -9,7 +9,7 @@
 #import "ScrollableImageDetailViewController.h"
 
 #import "UITabBarController+HideTabBar.h"					// thank you Carlos Oliva
-#import "UIViewController+UISplitViewControllerUtilities.h"
+#import "UIViewController+MasterDetailUtilities.h"
 
 @interface ScrollableImageDetailViewController ()
 @property (strong, nonatomic) IBOutlet UITapGestureRecognizer *singleTapGesture;

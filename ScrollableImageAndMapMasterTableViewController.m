@@ -7,10 +7,10 @@
 #include "xolawareOpenSourceCopyright.h"	//  Copyright (c) 2012 xolaware.
 
 #import "ScrollableImageAndMapMasterTableViewController.h"
+#import "UIViewController+MasterDetailUtilities.h"
 
 #import "MapViewController.h"
 #import "ScrollableImageDetailViewController.h"
-#import "UIViewController+UISplitViewControllerUtilities.h"
 
 @interface ScrollableImageAndMapMasterTableViewController ()
 	<MapViewControllerDelegate, UITableViewDelegate>
