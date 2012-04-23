@@ -8,8 +8,8 @@
 
 #import "ScrollableImageDetailViewController.h"
 
+#import "UISplitViewController+MasterDetailUtilities.h"
 #import "UITabBarController+HideTabBar.h"					// thank you Carlos Oliva
-#import "UIViewController+MasterDetailUtilities.h"
 
 @interface ScrollableImageDetailViewController ()
 @property (strong, nonatomic) IBOutlet UITapGestureRecognizer *singleTapGesture;
@@ -67,8 +67,7 @@
 
 - (void)resetSplitViewBarButtonTitle
 {
-	self.navigationItem.leftBarButtonItem.title = NSLocalizedString(@"Top", @"Top");
-	UITabBarController* mVC = (UITabBarController*)[self masterViewController];
+	UITabBarController* mVC = [self.splitViewController masterTabBarController];
 	if ([mVC isKindOfClass:[UITabBarController class]])
 	{
 		int selectedIndex = [mVC selectedIndex];
@@ -129,12 +128,11 @@
 - (void)setBarsHidden:(BOOL)hidden animated:(BOOL)animated
 {
 	[self.navigationController setNavigationBarHidden:hidden animated:animated];
-	UIViewController* parent = self.navigationController.parentViewController;
-	if ([parent isKindOfClass:[UITabBarController class]])
-	{
-		UITabBarController* tabBarController = (UITabBarController*)parent;
-		[tabBarController setTabBarHidden:![tabBarController isTabBarHidden] animated:animated];	
-	}
+	id parent = self.navigationController.parentViewController;
+	if ([parent respondsToSelector:@selector(isTabBarHidden)]
+		&& [parent respondsToSelector:@selector(setTabBarHidden:animated:)])
+		[parent setTabBarHidden:![parent isTabBarHidden] animated:animated];
+
 //	else if ([parent isKindOfClass:[UISplitViewController class]]
 //			 && UIInterfaceOrientationIsLandscape([[UIDevice currentDevice] orientation]))
 //	{

@@ -7,7 +7,8 @@
 #include "xolawareOpenSourceCopyright.h"	//  Copyright (c) 2012 xolaware.
 
 #import "ScrollableImageAndMapMasterTableViewController.h"
-#import "UIViewController+MasterDetailUtilities.h"
+
+#import "UISplitViewController+MasterDetailUtilities.h"
 
 #import "MapViewController.h"
 #import "ScrollableImageDetailViewController.h"
@@ -34,7 +35,7 @@
 {
 	[super viewDidAppear:animated];
 	ScrollableImageDetailViewController* sidVC
-	  = (ScrollableImageDetailViewController*)[self detailViewController];
+	  = (ScrollableImageDetailViewController*)[self.splitViewController detailUIViewController];
 	[sidVC resetSplitViewBarButtonTitle];
 }
 
