@@ -15,15 +15,16 @@
 
 @optional
 
+@property (strong, nonatomic) UIPopoverController* mapPopover;
+
 - (UIImage*)mapViewController:(MapViewController*)sender
 		   imageForAnnotation:(id<MKAnnotation>)annotation;
 
 - (void)mapViewController:(MapViewController*)sender
 	   selectedAnnotation:(id<MKAnnotation>)annotation;
 
-- (void)mapViewController:(MapViewController*)sender
-	   leftAccessorySegue:(UIStoryboardSegue*)segue
-			forAnnotation:(id<MKAnnotation>)annotation;
+- (void)destinationViewController:(UIViewController*)sender
+		 acceptSegueForAnnotation:(id<MKAnnotation>)location;
 
 @end
    

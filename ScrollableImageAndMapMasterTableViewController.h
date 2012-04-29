@@ -12,7 +12,6 @@
 
 @interface ScrollableImageAndMapMasterTableViewController : UITableViewController
 @property (strong, nonatomic) NSArray* objects;
-@property (strong, atomic) UIPopoverController* mapPopover;
 
 - (void)annotateMap:(MapViewController*)mapVC forRowAtIndexPath:(NSIndexPath*)indexPath;
 

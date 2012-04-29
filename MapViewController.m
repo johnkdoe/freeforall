@@ -99,9 +99,8 @@
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
 	if ([@"iPhoneAnnotationLeftAccessory" isEqualToString:segue.identifier])
-	{
-		[self.delegate mapViewController:self leftAccessorySegue:segue forAnnotation:sender];
-	}
+		[self.delegate destinationViewController:segue.destinationViewController
+						acceptSegueForAnnotation:sender];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
@@ -144,9 +143,8 @@
 				   annotationView:(MKAnnotationView*)view
 	calloutAccessoryControlTapped:(UIControl*)control
 {
-	NSLog(@"%@", control);
-	if (self.navigationController.splitViewController)
-		;
+	if ([self.delegate.mapPopover isKindOfClass:[UIPopoverController class]])
+		[self.delegate destinationViewController:nil acceptSegueForAnnotation:view.annotation];
 	else
 		[self performSegueWithIdentifier:@"iPhoneAnnotationLeftAccessory"
 								  sender:view.annotation];
