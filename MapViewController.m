@@ -96,6 +96,14 @@
     // Release any retained subviews of the main view.
 }
 
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+	if ([@"iPhoneAnnotationLeftAccessory" isEqualToString:segue.identifier])
+	{
+		[self.delegate mapViewController:self leftAccessorySegue:segue forAnnotation:sender];
+	}
+}
+
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
     return YES;
@@ -117,18 +125,31 @@
 		aView = [[MKPinAnnotationView alloc] initWithAnnotation:annotation
 												reuseIdentifier:@"MapVC"];
 		aView.canShowCallout = YES;
-		aView.leftCalloutAccessoryView
-		  = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 31, 31)];
+		UIButton* annotationImage = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 31, 31)];
+		aView.leftCalloutAccessoryView = annotationImage;
 	}
-	[(UIImageView*)aView.leftCalloutAccessoryView setImage:nil];
+//	[(UIImageView*)aView.leftCalloutAccessoryView setImage:nil];
 	return aView;
 }
 
 - (void)mapView:(MKMapView *)mapView didSelectAnnotationView:(MKAnnotationView*)view
 {
-	UIImage* image
-	  = [self.delegate mapViewController:self imageForAnnotation:view.annotation];
-	[(UIImageView*)view.leftCalloutAccessoryView setImage:image];
+	UIImage* image = [self.delegate mapViewController:self imageForAnnotation:view.annotation];
+	[(UIButton*)view.leftCalloutAccessoryView setImage:image forState:UIControlStateNormal];
+	UIControlState allControlStates = UIControlStateHighlighted | UIControlStateSelected;
+	[(UIButton*)view.leftCalloutAccessoryView setImage:image forState:allControlStates];
+}
+
+- (void)				  mapView:(MKMapView*)mapView 
+				   annotationView:(MKAnnotationView*)view
+	calloutAccessoryControlTapped:(UIControl*)control
+{
+	NSLog(@"%@", control);
+	if (self.navigationController.splitViewController)
+		;
+	else
+		[self performSegueWithIdentifier:@"iPhoneAnnotationLeftAccessory"
+								  sender:view.annotation];
 }
 
 @end

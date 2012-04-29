@@ -21,6 +21,10 @@
 - (void)mapViewController:(MapViewController*)sender
 	   selectedAnnotation:(id<MKAnnotation>)annotation;
 
+- (void)mapViewController:(MapViewController*)sender
+	   leftAccessorySegue:(UIStoryboardSegue*)segue
+			forAnnotation:(id<MKAnnotation>)annotation;
+
 @end
    
 @interface MapViewController : UIViewController
