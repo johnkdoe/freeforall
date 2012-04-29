@@ -99,8 +99,8 @@
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
 	if ([@"iPhoneAnnotationLeftAccessory" isEqualToString:segue.identifier])
-		[self.delegate destinationViewController:segue.destinationViewController
-						acceptSegueForAnnotation:sender];
+		[self.delegate acceptSegueFromAnnotation:sender
+					forDestinationViewController:segue.destinationViewController];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
@@ -124,10 +124,9 @@
 		aView = [[MKPinAnnotationView alloc] initWithAnnotation:annotation
 												reuseIdentifier:@"MapVC"];
 		aView.canShowCallout = YES;
-		UIButton* annotationImage = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 31, 31)];
-		aView.leftCalloutAccessoryView = annotationImage;
+		aView.leftCalloutAccessoryView
+		  = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 31, 31)];
 	}
-//	[(UIImageView*)aView.leftCalloutAccessoryView setImage:nil];
 	return aView;
 }
 
@@ -135,8 +134,8 @@
 {
 	UIImage* image = [self.delegate mapViewController:self imageForAnnotation:view.annotation];
 	[(UIButton*)view.leftCalloutAccessoryView setImage:image forState:UIControlStateNormal];
-	UIControlState allControlStates = UIControlStateHighlighted | UIControlStateSelected;
-	[(UIButton*)view.leftCalloutAccessoryView setImage:image forState:allControlStates];
+	UIControlState controlStatesMask = UIControlStateHighlighted | UIControlStateSelected;
+	[(UIButton*)view.leftCalloutAccessoryView setImage:image forState:controlStatesMask];
 }
 
 - (void)				  mapView:(MKMapView*)mapView 
@@ -144,7 +143,8 @@
 	calloutAccessoryControlTapped:(UIControl*)control
 {
 	if ([self.delegate.mapPopover isKindOfClass:[UIPopoverController class]])
-		[self.delegate destinationViewController:nil acceptSegueForAnnotation:view.annotation];
+		[self.delegate acceptSegueFromAnnotation:view.annotation
+					forDestinationViewController:nil];	// delegate will figure it out
 	else
 		[self performSegueWithIdentifier:@"iPhoneAnnotationLeftAccessory"
 								  sender:view.annotation];

@@ -23,8 +23,8 @@
 - (void)mapViewController:(MapViewController*)sender
 	   selectedAnnotation:(id<MKAnnotation>)annotation;
 
-- (void)destinationViewController:(UIViewController*)sender
-		 acceptSegueForAnnotation:(id<MKAnnotation>)location;
+- (void)acceptSegueFromAnnotation:(id<MKAnnotation>)location
+	 forDestinationViewController:(UIViewController*)sender;
 
 @end
    
