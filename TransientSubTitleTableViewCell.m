@@ -1,6 +1,6 @@
 //
 //  TransientSubTitleTableViewCell.m
-//  FlikrTop
+//  xolawareUI
 //
 //  Created by me on 2012.04.17.
 

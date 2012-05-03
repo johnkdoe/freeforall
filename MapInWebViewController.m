@@ -3,25 +3,19 @@
 //  XolawareUI
 //
 //  Created by me on 2012.04.08.
-//  Copyright (c) 2012 xolaware. All rights reserved.
-//
+
+#include "xolawareOpenSourceCopyright.h"	// Copyright (c) 2012 xolaware.
 
 #import "MapInWebViewController.h"
+
+// the only reason to use this over MapKit is because it has the nav bar
+// and voice-activated UI from the direct connection to the web page
 
 #define MAP_URL "http://maps.google.com/maps?q="
 
 @implementation MapInWebViewController
 @synthesize webView;
 @synthesize locationInMap = _locationInMap;
-
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
-{
-    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-    if (self) {
-		// Custom initialization
-    }
-    return self;
-}
 
 - (NSURL*)googleURL
 {
@@ -34,13 +28,6 @@
 {
     [super viewDidLoad];
     [self.webView loadRequest:[NSURLRequest requestWithURL:[self googleURL]]];
-}
-
-- (void)viewDidUnload
-{
-	[super viewDidUnload];
-    // Release any retained subviews of the main view.
-    // e.g. self.myOutlet = nil;
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
