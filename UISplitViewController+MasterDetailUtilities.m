@@ -33,4 +33,18 @@
 	return nil;
 }
 
+- (UINavigationController*)selectedTabBarNavigationController {
+	UITabBarController* mVC = self.masterTabBarController;
+	if (![mVC isKindOfClass:[UITabBarController class]])
+		return nil;
+	int selectedIndex = [mVC selectedIndex];
+	if (selectedIndex < 0 || selectedIndex > [mVC viewControllers].count)
+		selectedIndex = 0;
+	UINavigationController* navController = [[mVC viewControllers] objectAtIndex:selectedIndex];
+	if ([navController isKindOfClass:[UINavigationController class]])
+		return navController;
+	
+	return nil;
+}
+
 @end

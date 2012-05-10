@@ -31,17 +31,29 @@
 
 #pragma mark - UITableViewController life cycle // overrides
 
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
+	{
+		[self.navigationController.navigationBar
+			setTitleVerticalPositionAdjustment:-2.0 forBarMetrics:UIBarMetricsDefault];
+		[self.navigationController.navigationBar
+			setTitleVerticalPositionAdjustment:-2.0 forBarMetrics:UIBarMetricsLandscapePhone];
+	}
+}
+
 - (void)viewDidAppear:(BOOL)animated
 {
 	[super viewDidAppear:animated];
 	ScrollableImageDetailViewController* sidVC
-	  = (ScrollableImageDetailViewController*)[self.splitViewController detailUIViewController];
+	  = (ScrollableImageDetailViewController*)(self.splitViewController.detailUIViewController);
 	[sidVC resetSplitViewBarButtonTitle];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
+	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
 	    return (interfaceOrientation != UIInterfaceOrientationPortraitUpsideDown);
 	} else {
 	    return YES;
@@ -63,7 +75,7 @@
 - (void)						   tableView:(UITableView*)tableView
 	accessoryButtonTappedForRowWithIndexPath:(NSIndexPath*)indexPath
 {
-	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad)
+	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
 	{
 		MapViewController* mapVC
 		  = [[MapViewController alloc] initWithNibName:@"MapViewController" bundle:nil];

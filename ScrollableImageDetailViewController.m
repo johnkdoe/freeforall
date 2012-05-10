@@ -67,15 +67,8 @@
 
 - (void)resetSplitViewBarButtonTitle
 {
-	UITabBarController* mVC = [self.splitViewController masterTabBarController];
-	if ([mVC isKindOfClass:[UITabBarController class]])
-	{
-		int selectedIndex = [mVC selectedIndex];
-		if (selectedIndex < 0 || selectedIndex > [mVC viewControllers].count)
-			selectedIndex = 0;
-		UINavigationController* nc = [[mVC viewControllers] objectAtIndex:selectedIndex];
-		self.navigationItem.leftBarButtonItem.title = nc.topViewController.navigationItem.title;
-	}
+	UINavigationController* nc = self.splitViewController.selectedTabBarNavigationController;
+	self.navigationItem.leftBarButtonItem.title = nc.topViewController.navigationItem.title;
 }
 
 - (void)setImageTitle:(NSString*)imageTitle
@@ -184,9 +177,19 @@
 	self.scrollView.delegate = self;
 	if (self.image)						// in iPhone segue, image will get set before load
 		[self nestImageInScrollView];
-	
-	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad)
+
+	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+	{
 		[self resetSplitViewBarButtonTitle];
+	}
+	else
+	{
+		[self.navigationController.navigationBar
+			setTitleVerticalPositionAdjustment:-2.0 forBarMetrics:UIBarMetricsDefault];
+		[self.navigationController.navigationBar
+			setTitleVerticalPositionAdjustment:-2.0 forBarMetrics:UIBarMetricsLandscapePhone];
+	}
+
 }
 
 - (void)viewWillDisappear:(BOOL)animated
