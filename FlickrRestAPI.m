@@ -38,7 +38,7 @@
 
 @implementation FlickrRestAPI
 
-+ (NSDictionary *)flickrRestQuery:(NSString *)query
++ (NSDictionary *)query:(NSString *)query
 {
     query = [query stringByAppendingFormat:@"&format=json&nojsoncallback=1&api_key=%@", API_KEY];
     query = [query stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
@@ -53,20 +53,20 @@
 	NSString* request
 	  = [API_REST_QUERY stringByAppendingFormat:API_PLACE_ARGS_FORMAT,
 												[photo valueForKey:FLICKR_API_PLACE_ID]];
-	return [self flickrRestQuery:request];
+	return [FlickrRestAPI query:request];
 }
 
 + (NSArray*)recentGeoreferencedPhotos
 {
     NSString* request = [API_REST_QUERY stringByAppendingFormat:API_GEOREF_ARGS_FORMAT,
 																API_EXTRAS_ARGS];
-    return [[self flickrRestQuery:request] valueForKeyPath:@"photos.photo"];
+    return [[FlickrRestAPI query:request] valueForKeyPath:@"photos.photo"];
 }
 
 + (NSArray*)topPlaces
 {
     NSString* request = [API_REST_QUERY stringByAppendingString:API_TOP_PLACES_ARGS];
-    return [[self flickrRestQuery:request] valueForKeyPath:@"places.place"];
+    return [[FlickrRestAPI query:request] valueForKeyPath:@"places.place"];
 }
 
 + (NSArray*)photosInPlace:(NSDictionary *)place maxResults:(int)maxResults
@@ -77,12 +77,12 @@
         NSString* request
 		  = [API_REST_QUERY stringByAppendingFormat:API_PLACE_PHOTOS_FORMAT,
 													placeId, maxResults, API_EXTRAS_ARGS];
-        return [[self flickrRestQuery:request] valueForKeyPath:@"photos.photo"];
+        return [[FlickrRestAPI query:request] valueForKeyPath:@"photos.photo"];
     }
     return nil;
 }
 
-+ (NSString *)urlStringForPhoto:(NSDictionary *)photo format:(NSString*)format
++ (NSString*)urlStringForPhoto:(NSDictionary*)photo format:(NSString*)format
 {
 	/*
 		from http://www.flickr.com/services/api/flickr.photos.getSizes.html
@@ -156,9 +156,8 @@
 	{
 		secret = [photo objectForKey:@"secret"];
 		fileType = @"jpg";
-		
 	}
-	
+
 	if (!farm || !server || !photo_id || !secret) 
 		return nil;
 
