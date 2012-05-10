@@ -12,4 +12,5 @@
 - (UIViewController*)masterUIViewController;
 - (UIViewController*)detailUIViewController;
 - (UITabBarController*)masterTabBarController;
+- (UINavigationController*)selectedTabBarNavigationController;
 @end
