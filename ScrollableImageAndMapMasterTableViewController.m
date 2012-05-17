@@ -53,11 +53,7 @@
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
-	    return (interfaceOrientation != UIInterfaceOrientationPortraitUpsideDown);
-	} else {
-	    return YES;
-	}
+	return YES;
 }
 
 #pragma mark - ScrollableImageAndMapMasterTableViewController
