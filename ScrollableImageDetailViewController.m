@@ -8,15 +8,21 @@
 
 #import "ScrollableImageDetailViewController.h"
 
+#import "FlipsideViewController.h"
+
 #import "UISplitViewController+MasterDetailUtilities.h"
 #import "UITabBarController+HideTabBar.h"					// thank you Carlos Oliva
 
 @interface ScrollableImageDetailViewController ()
+	<UIPopoverControllerDelegate, FlipsideViewControllerDelegate>
 @property (strong, nonatomic) IBOutlet UITapGestureRecognizer *singleTapGesture;
 @property (strong, nonatomic) IBOutlet UITapGestureRecognizer *doubleTapGesture;
 @property (strong, nonatomic) IBOutlet UITapGestureRecognizer *tripleTapGesture;
 @property (weak, nonatomic) IBOutlet UIScrollView* scrollView;
+@property (weak, nonatomic) IBOutlet UIImageView *blindsImageView;
 @property (weak, nonatomic) UIImageView* nestedImageView;
+
+@property (strong, nonatomic) UIPopoverController *flipsidePopoverController;
 
 @property BOOL barsHidden;
 @property (readonly) CGSize recommendedZoomScales;
@@ -27,12 +33,19 @@
 
 @implementation ScrollableImageDetailViewController
 
+@synthesize image = _image;
+@synthesize originatingURL = _originatingURL;
+
 @synthesize singleTapGesture = _singleTapGesture;
 @synthesize doubleTapGesture = _doubleTapGesture;
 @synthesize tripleTapGesture = _tripleTapGesture;
+
+@synthesize flipsidePopoverController = _flipsidePopoverController;
+
 @synthesize scrollView = _scrollView;
+@synthesize blindsImageView = _blindsImageView;
 @synthesize nestedImageView = _nestedImageView;
-@synthesize image = _image;
+
 
 - (void)setImage:(UIImage*)uiImage
 {
@@ -93,39 +106,79 @@
 //		  );
 }
 
+- (CGRect)visibleBlindsRect
+{
+	CGFloat y = 0, h = self.view.frame.size.height;
+	if (!self.barsHidden)
+		h -= y = self.navigationController.navigationBar.frame.size.height;
+	return CGRectMake(0, y, self.blindsImageView.frame.size.width, h);
+}
+
+typedef void (^completionBlock)(BOOL);
+
 - (void)nestImageInScrollView
 {
-//	[self debugLog:@"ni-pre"];
-	if (_nestedImageView && [self.scrollView.subviews containsObject:_nestedImageView])
+	typedef void (^animationBlock)(void);
+	animationBlock showBlinds;
+
+	NSTimeInterval duration;
+	if (self.blindsImageView.hidden)
 	{
-		self.scrollView.zoomScale = 1;
-		[_nestedImageView removeFromSuperview];
+		duration = 0.2;
+		self.blindsImageView.hidden = NO;
+		CGRect visibleBlindsRect = [self visibleBlindsRect];
+		showBlinds = ^{ self.blindsImageView.frame = visibleBlindsRect; };
+//		NSLog(@"bvb={%g,%g,%g,%g},bvf={%g,%g,%g,%g},vbr={%g,%g,%g,%g}",
+//			  self.blindsImageView.bounds.origin.x, self.blindsImageView.bounds.origin.y,
+//			  self.blindsImageView.bounds.size.width, self.blindsImageView.bounds.size.height,
+//			  self.blindsImageView.frame.origin.x, self.blindsImageView.frame.origin.y,
+//			  self.blindsImageView.frame.size.width, self.blindsImageView.frame.size.height,
+//			  visibleBlindsRect.origin.x, visibleBlindsRect.origin.y,
+//			  visibleBlindsRect.size.width, visibleBlindsRect.size.height
+//			  );
 	}
-//	[self debugLog:@"ni-cp1"];
-	
-	self.scrollView.contentSize = _image.size;
+	else
+	{
+		duration = 0;
+		showBlinds = nil;
+//		NSLog(@"self.blindsImageView.hidden == NO");
+	}
 
-	[self.scrollView addSubview:[[UIImageView alloc] initWithImage:self.image]];
-	_nestedImageView = self.scrollView.subviews.lastObject;
+	completionBlock nestImageInScrollView = ^(BOOL finished)
+	{
+		if (_nestedImageView && [self.scrollView.subviews containsObject:_nestedImageView])
+		{
+			self.scrollView.zoomScale = 1;
+			[_nestedImageView removeFromSuperview];
+		}
+		self.scrollView.contentSize = _image.size;
+		
+		[self.scrollView addSubview:[[UIImageView alloc] initWithImage:self.image]];
+		_nestedImageView = self.scrollView.subviews.lastObject;
+		
+		CGSize recommendedZoom = self.recommendedZoomScales;
+		self.scrollView.zoomScale = MAX(recommendedZoom.width, recommendedZoom.height);
+		
+		// must come after setZoomScale
+		self.scrollView.contentOffset = CGPointZero;
+		[self hideBlinds];
+	};
 
-	CGSize recommendedZoom = self.recommendedZoomScales;
-	self.scrollView.zoomScale = MAX(recommendedZoom.width, recommendedZoom.height);
-
-	// must come after setZoomScale
-	self.scrollView.contentOffset = CGPointZero;
-
-	[self.doubleTapGesture requireGestureRecognizerToFail:self.tripleTapGesture];
-	[self.singleTapGesture requireGestureRecognizerToFail:self.doubleTapGesture];
+	[UIView animateWithDuration:duration delay:0.0 options:UIViewAnimationCurveEaseOut
+					 animations:showBlinds
+					 completion:nestImageInScrollView];
 }
 
 - (void)setBarsHidden:(BOOL)hidden animated:(BOOL)animated
 {
 	[self.navigationController setNavigationBarHidden:hidden animated:animated];
+
 	id parent = self.navigationController.parentViewController;
 	if ([parent respondsToSelector:@selector(isTabBarHidden)]
+		&& hidden != [parent isTabBarHidden]
 		&& [parent respondsToSelector:@selector(setTabBarHidden:animated:)])
-		[parent setTabBarHidden:![parent isTabBarHidden] animated:animated];
-
+		[parent setTabBarHidden:hidden animated:animated];
+	
 //	else if ([parent isKindOfClass:[UISplitViewController class]]
 //			 && UIInterfaceOrientationIsLandscape([[UIDevice currentDevice] orientation]))
 //	{
@@ -169,6 +222,31 @@
 //	}
 }
 
+/*
+- (void)showBlinds
+{
+	self.blindsImageView.hidden = NO;
+	CGRect visibleBlindsRect = [self visibleBlindsRect];
+	[UIView animateWithDuration:0.2 delay:0.0 options:UIViewAnimationCurveEaseOut
+					 animations:^{ self.blindsImageView.frame = visibleBlindsRect; }
+					 completion:^(BOOL finished) { [self hideBlinds]; } ];
+}
+*/
+
+- (void)hideBlinds
+{
+	CGFloat y = self.barsHidden ? 0 : self.navigationController.navigationBar.frame.size.height;
+	CGRect hiddenBlindsRect = CGRectMake(0, y, self.blindsImageView.frame.size.width, 0);
+	completionBlock hideBlindsImageView = ^(BOOL finished) {
+		[NSThread sleepForTimeInterval:0.777];
+		self.blindsImageView.hidden = YES;
+	};
+
+	[UIView animateWithDuration:0.666 delay:0.1 options:UIViewAnimationCurveEaseInOut
+					 animations:^{ self.blindsImageView.frame = hiddenBlindsRect; }
+					 completion:hideBlindsImageView ];
+}
+
 #pragma mark - UIViewController life cycle overrides
 
 - (void)viewDidLoad
@@ -190,6 +268,15 @@
 			setTitleVerticalPositionAdjustment:-2.0 forBarMetrics:UIBarMetricsLandscapePhone];
 	}
 
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+	[self.doubleTapGesture requireGestureRecognizerToFail:self.tripleTapGesture];
+	[self.singleTapGesture requireGestureRecognizerToFail:self.doubleTapGesture];
+
+	if (self.blindsImageView && !self.blindsImageView.hidden && self.nestedImageView)
+		[self hideBlinds];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -215,12 +302,19 @@
 	[self setDoubleTapGesture:nil];	// automatically inserted by Xcode
 	[self setTripleTapGesture:nil];	// automatically inserted by Xcode
 	[self setSingleTapGesture:nil];	// automatically isnerted by Xcode
+	[self setBlindsImageView:nil];	// automatically inserted by Xcode
     [super viewDidUnload];
     // Release any retained subviews of the main view.
 }
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
+// more animation here than i have time to get right; so just turning it off
+// (specifically, the blinds image is too long to start when rotating to portrait
+// and too short to start when rotating to landscape)
+//	if (self.nestedImageView)
+//		[self hideBlinds];
+
 	// need all these values for zooming as done after the orientation
 	float zoomScale = self.scrollView.zoomScale;
 	float oldMinZoom = self.scrollView.minimumZoomScale;
@@ -230,10 +324,37 @@
 	else if (zoomScale > self.scrollView.maximumZoomScale)
 		[self.scrollView setZoomScale:self.scrollView.maximumZoomScale animated:YES];
 }
+/*
+- (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation 
+								duration:(NSTimeInterval)duration
+{
+// more animation here than i have time to get right; so just turning it off
+// (specifically, the blinds image is too long to start when rotating to portrait
+// and too short to start when rotating to landscape)
+	if (self.nestedImageView)
+		[self showBlinds];
+}
+*/
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
 	return YES;
+}
+
+- (void)prepareForSegue:(UIStoryboardSegue*)segue sender:(id)sender
+{
+	if ([[segue identifier] isEqualToString:@"scrollableImageDetailInfo"])
+	{
+		[segue.destinationViewController setFlipsideViewControllerDelegate:self];
+		[segue.destinationViewController setOriginatingURL:self.originatingURL];
+		if ([segue respondsToSelector:@selector(popoverController)])
+		{
+			self.flipsidePopoverController = [(id)segue popoverController];
+			self.flipsidePopoverController.delegate = self;
+		}
+		if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+			self.navigationItem.rightBarButtonItem.enabled = NO;
+	}
 }
 
 #pragma mark - gesture recognizers
@@ -280,6 +401,27 @@
 		[self.scrollView setZoomScale:1 animated:YES];
 		[self.scrollView setNeedsDisplay];
 	}	
+}
+
+#pragma mark - FlipsideViewControllerDelegate implementation
+
+- (void)flipsideViewControllerDidFinish:(FlipsideViewController*)controller
+{
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
+        [self dismissModalViewControllerAnimated:YES];
+    } else {
+		self.navigationItem.rightBarButtonItem.enabled = YES;
+        [self.flipsidePopoverController dismissPopoverAnimated:YES];
+        self.flipsidePopoverController = nil;
+    }
+}
+
+#pragma mark - UIPopoverControllerDelegate implementation
+
+- (void)popoverControllerDidDismissPopover:(UIPopoverController*)popoverController
+{
+	self.navigationItem.rightBarButtonItem.enabled = YES;
+	self.flipsidePopoverController = nil;
 }
 
 #pragma mark - UIScrollViewDelegate

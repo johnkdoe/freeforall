@@ -12,6 +12,7 @@
   : UIViewController<UIScrollViewDelegate, UISplitViewControllerDelegate>;
 
 @property (strong, nonatomic) UIImage* image;
+@property (strong, nonatomic) NSURL* originatingURL;
 
 - (void)resetSplitViewBarButtonTitle;
 - (void)setImageTitle:(NSString*)imageTitle;
