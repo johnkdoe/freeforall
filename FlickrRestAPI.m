@@ -27,13 +27,14 @@
 				 url="http://flickr.com/commons/usage/" />
  */
 
-#define API_REST_QUERY			@"http://api.flickr.com/services/rest/?method=flickr"
+#define API_REST_QUERY	@"http://api.flickr.com/services/rest/?method=flickr"
 
-#define API_EXTRAS_ARGS			@"&extras=original_format,tags,description,geo,date_upload,owner_name,place_url%@"
+#define API_EXTRAS_ARGS	@"&extras=original_format,tags,description,geo,owner_name,place_url,license,url_s"
 
-#define API_GEOREF_ARGS_FORMAT	@".photos.search&per_page=500&license=1,2,4,7&has_geo=1%@"
+#define API_GEOREF_ARGS_FORMAT	@".photos.search&per_page=500&license=1,2,3,4,7&has_geo=1%@"
 #define API_PLACE_ARGS_FORMAT	@".places.getInfo&place_id=%@"
 #define API_PLACE_PHOTOS_FORMAT	@".photos.search&has_geo=1&place_id=%@&per_page=%d%@"
+#define API_PHOTO_SIZES_FORMAT	@".photos.getSizes&photo_id=%@"
 #define API_TOP_PLACES_ARGS		@".places.getTopPlacesList&place_type_id=7"
 
 @implementation FlickrRestAPI
@@ -50,6 +51,7 @@
 
 + (NSDictionary*)readablePlaceParts:(NSDictionary*)photo
 {
+	
 	NSString* request
 	  = [API_REST_QUERY stringByAppendingFormat:API_PLACE_ARGS_FORMAT,
 												[photo valueForKey:FLICKR_API_PLACE_ID]];
@@ -82,7 +84,7 @@
     return nil;
 }
 
-+ (NSString*)urlStringForPhoto:(NSDictionary*)photo format:(NSString*)format
++ (NSString*)farmURLforPhoto:(NSDictionary*)photo withFormat:(NSString*)format
 {
 	/*
 		from http://www.flickr.com/services/api/flickr.photos.getSizes.html
@@ -165,9 +167,43 @@
 									  farm, server, photo_id, secret, formatChar, fileType];
 }
 
-+ (NSURL *)urlForPhoto:(NSDictionary*)photo withFormat:(NSString*)format
++ (NSURL *)farmUrlForPhoto:(NSDictionary*)photo withFormat:(NSString*)format
 {
-    return [NSURL URLWithString:[self urlStringForPhoto:photo format:format]];
+    return [NSURL URLWithString:[self farmURLforPhoto:photo withFormat:format]];
+}
+
++ (NSDictionary*)sizesForPhoto:(NSDictionary*)photo
+{
+	NSString* request
+	  = [API_REST_QUERY stringByAppendingFormat:API_PHOTO_SIZES_FORMAT,
+												[photo valueForKey:FLICKR_API_PHOTO_ID]];
+	return [FlickrRestAPI query:request];
+}
+
++ (NSURL*)urlForThumbnailAttributionForPhoto:(NSDictionary*)photo
+{
+	NSDictionary* sizes = [FlickrRestAPI sizesForPhoto:photo];
+	NSString* fallback;
+	BOOL smallFallBack = NO;
+	for (NSDictionary* size in [sizes valueForKeyPath:@"sizes.size"])
+	{
+		NSString* label = [size valueForKey:@"label"];
+		if ([@"Thumbnail" isEqualToString:label])
+			return [NSURL URLWithString:[size valueForKey:@"url"]];
+		if (!smallFallBack)
+		{
+			if ([@"Small" isEqualToString:label])
+				smallFallBack = YES;
+			if (!fallback || smallFallBack)
+				fallback = [size valueForKey:@"url"];
+		}
+		
+	}
+
+	if (fallback)
+		return [NSURL URLWithString:fallback];
+
+	return nil;
 }
 
 @end

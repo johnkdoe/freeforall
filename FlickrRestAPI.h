@@ -16,12 +16,16 @@
 #define FLICKR_API_LATITUDE @"latitude"
 #define FLICKR_API_LONGITUDE @"longitude"
 
+#define FLICKR_API_MAX_PHOTOS_PER_PAGE 30
+
 @interface FlickrRestAPI
 
 + (NSArray*)recentGeoreferencedPhotos;
 + (NSArray*)topPlaces;
 + (NSArray*)photosInPlace:(NSDictionary*)place maxResults:(int)maxResults;
 + (NSDictionary*)readablePlaceParts:(NSDictionary*)photo;
-+ (NSURL*)urlForPhoto:(NSDictionary*)photo withFormat:(NSString*)format;
++ (NSURL*)farmUrlForPhoto:(NSDictionary*)photo withFormat:(NSString*)format;
++ (NSDictionary*)sizesForPhoto:(NSDictionary*)photo;
++ (NSURL*)urlForThumbnailAttributionForPhoto:(NSDictionary*)photo;
 
 @end
