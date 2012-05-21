@@ -29,20 +29,28 @@
 
 - (void)viewWillAppear:(BOOL)animated
 {
-	self.webView.delegate = self;		// to enable fwd button in webViewDidFinishLoad:
+	[super viewWillAppear:animated];
 
-	// allow a little zooming, since the pages come up really small on iPhone
-	self.webView.scrollView.minimumZoomScale = 0.8;
-	self.webView.scrollView.maximumZoomScale = 2.0;
-
-	if (self.originatingURL)
-		[self.webView loadRequest:[NSURLRequest requestWithURL:self.originatingURL]];
-	else
+	// could have lived with self.webView being nil in all message passing below,
+	// but why go through the trouble of looking up the URL, etc, if no webView exists
+	if (self.webView)
 	{
-		NSString* resPath = [[NSBundle mainBundle] pathForResource:@"index" ofType:@"html"];
-		[self.webView loadRequest:[NSURLRequest requestWithURL:[NSURL fileURLWithPath:resPath]]];
-	}	
+		self.webView.delegate = self;		// to enable fwd button in webViewDidFinishLoad:
 
+		// allow a little zooming, since the pages come up really small on iPhone
+		self.webView.scrollView.minimumZoomScale = 0.8;
+		self.webView.scrollView.maximumZoomScale = 2.0;
+
+		NSURL* url = self.originatingURL;
+		if (!url)
+		{
+			NSString* resPath = [[NSBundle mainBundle] pathForResource:@"index" ofType:@"html"];
+			if (resPath)
+				url = [NSURL fileURLWithPath:resPath];
+		}
+
+		[self.webView loadRequest:[NSURLRequest requestWithURL:url]];
+	}
 }
 
 - (void)viewDidUnload {
