@@ -11,6 +11,7 @@
 @interface MapViewController () <MKMapViewDelegate>
 
 @property (weak, nonatomic) IBOutlet MKMapView *mapView;
+@property (strong, nonatomic) IBOutlet UISegmentedControl *mapTypeSegmentedControl;
 
 @end
 
@@ -21,6 +22,7 @@
 #pragma mark @synthesize
 @synthesize delegate = _delegate;
 @synthesize mapView = _mapView;
+@synthesize mapTypeSegmentedControl = _mapTypeSegmentedControl;
 
 - (void)setMapView:(MKMapView*)mapView
 {
@@ -87,11 +89,23 @@
 	}
 }
 
+- (IBAction)mapType:(UISegmentedControl*)segmentedControl {
+	[self.mapView setMapType:(MKMapType)segmentedControl.selectedSegmentIndex];
+}
+
 #pragma mark - UIViewController life cycle // overrides
+
+- (void)viewWillAppear:(BOOL)animated {
+	[super viewWillAppear:animated];
+	[self.mapTypeSegmentedControl addTarget:self
+									 action:@selector(mapType:)
+						   forControlEvents:UIControlEventValueChanged];
+}
 
 - (void)viewDidUnload
 {
 	[self setMapView:nil];
+	[self setMapTypeSegmentedControl:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.
 }
