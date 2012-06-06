@@ -84,8 +84,7 @@
 	self.navigationItem.leftBarButtonItem.title = nc.topViewController.navigationItem.title;
 }
 
-- (void)setImageTitle:(NSString*)imageTitle
-{
+- (void)setImageTitle:(NSString*)imageTitle {
 	self.navigationItem.title = imageTitle;
 }
 
@@ -161,7 +160,8 @@ typedef void (^completionBlock)(BOOL);
 		
 		// must come after setZoomScale
 		self.scrollView.contentOffset = CGPointZero;
-		[self hideBlinds];
+		if (self.image)
+			[self hideBlinds];
 	};
 
 	[UIView animateWithDuration:duration delay:0.0 options:UIViewAnimationCurveEaseOut
@@ -275,7 +275,7 @@ typedef void (^completionBlock)(BOOL);
 	[self.doubleTapGesture requireGestureRecognizerToFail:self.tripleTapGesture];
 	[self.singleTapGesture requireGestureRecognizerToFail:self.doubleTapGesture];
 
-	if (self.blindsImageView && !self.blindsImageView.hidden && self.nestedImageView)
+	if (self.blindsImageView && !self.blindsImageView.hidden && self.nestedImageView && self.image)
 		[self hideBlinds];
 }
 
@@ -427,8 +427,7 @@ typedef void (^completionBlock)(BOOL);
 #pragma mark - UIScrollViewDelegate
 #pragma mark @optional
 
-- (UIView*)viewForZoomingInScrollView:(UIScrollView*)scrollView
-{
+- (UIView*)viewForZoomingInScrollView:(UIScrollView*)scrollView {
 	return self.nestedImageView;
 }
 
