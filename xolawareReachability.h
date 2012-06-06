@@ -63,7 +63,9 @@
  any use or derivation of this software should retain this chain of copyright.
 
  modifications:
+ - renamed xolawareReachability to differentiate from the Apple file
  - #import <netinet/in.h> moved to .h to silence warning regarding struct sockaddr_in
+ - added simple + (BOOL)connectedToNetwork when not waiting for notification for reachability
 
 */
 
@@ -79,24 +81,26 @@ typedef enum {
 
 #define kReachabilityChangedNotification @"kNetworkReachabilityChangedNotification"
 
-@interface Reachability: NSObject
+@interface xolawareReachability: NSObject
 {
 	BOOL localWiFiRef;
 	SCNetworkReachabilityRef reachabilityRef;
 }
 
++ (BOOL)connectedToNetwork;
+
 //reachabilityWithHostName- Use to check the reachability of a particular host name. 
-+ (Reachability*)reachabilityWithHostName:(NSString*)hostName;
++ (xolawareReachability*)reachabilityWithHostName:(NSString*)hostName;
 
 //reachabilityWithAddress- Use to check the reachability of a particular IP address. 
-+ (Reachability*)reachabilityWithAddress:(const struct sockaddr_in*)hostAddress;
++ (xolawareReachability*)reachabilityWithAddress:(const struct sockaddr_in*)hostAddress;
 
 //reachabilityForInternetConnection- checks whether the default route is available.  
 //  Should be used by applications that do not connect to a particular host
-+ (Reachability*)reachabilityForInternetConnection;
++ (xolawareReachability*)reachabilityForInternetConnection;
 
 //reachabilityForLocalWiFi- checks whether a local wifi connection is available.
-+ (Reachability*)reachabilityForLocalWiFi;
++ (xolawareReachability*)reachabilityForLocalWiFi;
 
 //Start listening for reachability notifications on the current run loop
 - (BOOL)startNotifier;

@@ -59,25 +59,27 @@
  https://developer.apple.com/library/ios/samplecode/Reachability/index.html to
  members of the iOS Developer Program.
 
- xolaware makes no claims or reservations on this software, other than that
- any use or derivation of this software should retain this chain of copyright.
-
- modifications:
+ xolaware makes no claims or reservations on this software, expect to require that any direct
+ use or derivation of this file should retain this chain of copyright and the chain of
+ modifications below:
+ - renamed xolawareReachability to differentiate from the Apple file
  - #import <netinet/in.h> moved to .h to silence warning regarding struct sockaddr_in
+ - don't #import <netinet/in6.h> to suppress preprocessor issue in that file: see RFC2553
  - #define kShouldPrintReachabilityFlags set to 0
  - #if kShouldPrintReachabilityFlags moved to streamline code
- 
+ - added simple + (BOOL)connectedToNetwork when not waiting for notification for reachability
+ - refactored code in several members functions to new member - (struct sockaddr_in)zeroAddress
+
 */
 
 #import <sys/socket.h>
-#import <netinet6/in6.h>
 #import <arpa/inet.h>
 #import <ifaddrs.h>
 #import <netdb.h>
 
 #import <CoreFoundation/CoreFoundation.h>
 
-#import "Reachability.h"
+#import "xolawareReachability.h"
 
 #define kShouldPrintReachabilityFlags 0
 
@@ -102,20 +104,24 @@ static void PrintReachabilityFlags(SCNetworkReachabilityFlags    flags, const ch
 #endif
 
 
-@implementation Reachability
-static void ReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReachabilityFlags flags, void* info)
+@implementation xolawareReachability
+static void ReachabilityCallback(SCNetworkReachabilityRef target,
+								 SCNetworkReachabilityFlags flags, void* info)
 {
 	#pragma unused (target, flags)
 	NSCAssert(info != NULL, @"info was NULL in ReachabilityCallback");
-	NSCAssert([(NSObject*)info isKindOfClass:[Reachability class]],
+	NSCAssert([(NSObject*)info isKindOfClass:[xolawareReachability class]],
 			  @"info was wrong class in ReachabilityCallback");
 
 	// We're on the main RunLoop, so an NSAutoreleasePool is not necessary,
 	// but is added defensively in case someone
 	// uses the Reachablity object in a different thread.
+
+	// automatic objc-arc as is default in Xcode 4.3 + iOS 5 can be suppressed
+	// with -fno-objc-arc for this file in the CompileSource tab of the target Build Phases
 	NSAutoreleasePool* myPool = [[NSAutoreleasePool alloc] init];
 
-	Reachability* noteObject = (Reachability*) info;
+	xolawareReachability* noteObject = (xolawareReachability*) info;
 	// Post a notification to notify the client that the network reachability changed.
 	[[NSNotificationCenter defaultCenter] postNotificationName:kReachabilityChangedNotification
 														object:noteObject];
@@ -133,7 +139,8 @@ static void ReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 - (void)stopNotifier
 {
 	if (reachabilityRef)
-		SCNetworkReachabilityUnscheduleFromRunLoop(reachabilityRef, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+		SCNetworkReachabilityUnscheduleFromRunLoop(reachabilityRef, CFRunLoopGetCurrent(),
+												   kCFRunLoopDefaultMode);
 }
 
 - (void)dealloc
@@ -145,30 +152,12 @@ static void ReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 	[super dealloc];
 }
 
-+ (Reachability*)reachabilityWithHostName:(NSString*)hostName;
++ (xolawareReachability*)reachabilityWithHostName:(NSString*)hostName;
 {
-	Reachability* retVal = NULL;
+	xolawareReachability* retVal = NULL;
 	SCNetworkReachabilityRef reachability
 	  = SCNetworkReachabilityCreateWithName(NULL, [hostName UTF8String]);
 	if (reachability)
-	{
-		retVal = [[[self alloc] init] autorelease];
-		if(retVal)
-		{
-			retVal->reachabilityRef = reachability;
-			retVal->localWiFiRef = NO;
-		}
-	}
-	return retVal;
-}
-
-+ (Reachability*)reachabilityWithAddress:(const struct sockaddr_in*)hostAddress;
-{
-	SCNetworkReachabilityRef reachability
-	  = SCNetworkReachabilityCreateWithAddress(kCFAllocatorDefault,
-											   (const struct sockaddr*)hostAddress);
-	Reachability* retVal = NULL;
-	if (reachability!= NULL)
 	{
 		retVal = [[[self alloc] init] autorelease];
 		if (retVal)
@@ -180,25 +169,63 @@ static void ReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 	return retVal;
 }
 
-+ (Reachability*)reachabilityForInternetConnection;
++ (struct sockaddr_in)zeroAddress
 {
-	struct sockaddr_in zeroAddress;
-	bzero(&zeroAddress, sizeof(zeroAddress));
-	zeroAddress.sin_len = sizeof(zeroAddress);
-	zeroAddress.sin_family = AF_INET;
-	return [self reachabilityWithAddress: &zeroAddress];
+	struct sockaddr_in _zeroAddress;
+	bzero(&_zeroAddress, sizeof(_zeroAddress));
+	_zeroAddress.sin_len = sizeof(_zeroAddress);
+	_zeroAddress.sin_family = AF_INET;
+	return _zeroAddress;
 }
 
-+ (Reachability*)reachabilityForLocalWiFi;
++ (BOOL)connectedToNetwork
 {
-	struct sockaddr_in localWifiAddress;
-	bzero(&localWifiAddress, sizeof(localWifiAddress));
-	localWifiAddress.sin_len = sizeof(localWifiAddress);
-	localWifiAddress.sin_family = AF_INET;
+	const struct sockaddr_in zeroAddress = self.zeroAddress;
+	SCNetworkReachabilityRef zeroRouteReachability
+	  = SCNetworkReachabilityCreateWithAddress(NULL, (const struct sockaddr*)&zeroAddress);
+	SCNetworkReachabilityFlags flags;
+
+	BOOL didRetrieveFlags = SCNetworkReachabilityGetFlags(zeroRouteReachability, &flags);
+	CFRelease(zeroRouteReachability);
+	if (!didRetrieveFlags)
+		return NO;
+
+	BOOL isReachable = flags & kSCNetworkFlagsReachable;
+	BOOL needsConnection = flags & kSCNetworkFlagsConnectionRequired;
+
+	return isReachable && !needsConnection;
+}
+
++ (xolawareReachability*)reachabilityWithAddress:(const struct sockaddr_in*)hostAddress;
+{
+	SCNetworkReachabilityRef reachability
+	  = SCNetworkReachabilityCreateWithAddress(kCFAllocatorDefault,
+											   (const struct sockaddr*)hostAddress);
+	xolawareReachability* retVal = NULL;
+	if (reachability != NULL)
+	{
+		retVal = [[[self alloc] init] autorelease];
+		if (retVal)
+		{
+			retVal->reachabilityRef = reachability;
+			retVal->localWiFiRef = NO;
+		}
+	}
+	return retVal;
+}
+
++ (xolawareReachability*)reachabilityForInternetConnection;{
+	const struct sockaddr_in zeroAddress = self.zeroAddress;
+	return [self reachabilityWithAddress:&zeroAddress];
+}
+
++ (xolawareReachability*)reachabilityForLocalWiFi;
+{
+	struct sockaddr_in localWifiAddress = self.zeroAddress;
 
 	// IN_LINKLOCALNETNUM is defined in <netinet/in.h> as 169.254.0.0
 	localWifiAddress.sin_addr.s_addr = htonl(IN_LINKLOCALNETNUM);
-	Reachability* retVal = [self reachabilityWithAddress: &localWifiAddress];
+	xolawareReachability* retVal = [self reachabilityWithAddress:&localWifiAddress];
 	if (retVal)
 		retVal->localWiFiRef = YES;
 
@@ -283,15 +310,12 @@ static void ReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
 	SCNetworkReachabilityFlags flags;
 	if (SCNetworkReachabilityGetFlags(reachabilityRef, &flags))
 	{
-		if(localWiFiRef)
-		{
+		if (localWiFiRef)
 			retVal = [self localWiFiStatusForFlags: flags];
-		}
 		else
-		{
 			retVal = [self networkStatusForFlags: flags];
-		}
 	}
 	return retVal;
 }
+
 @end
