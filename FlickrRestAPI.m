@@ -37,6 +37,8 @@
 #define API_PHOTO_SIZES_FORMAT	@".photos.getSizes&photo_id=%@"
 #define API_TOP_PLACES_ARGS		@".places.getTopPlacesList&place_type_id=7"
 
+#define API_PACIFIC_BEACH		@".places.find&query=Pacific+Beach%2C+California%2C+92109"
+
 @implementation FlickrRestAPI
 
 + (NSDictionary *)query:(NSString *)query
@@ -69,6 +71,14 @@
 {
     NSString* request = [API_REST_QUERY stringByAppendingString:API_TOP_PLACES_ARGS];
     return [[FlickrRestAPI query:request] valueForKeyPath:@"places.place"];
+}
+
++ (NSDictionary*)pacificBeach
+{
+	NSString* request = [API_REST_QUERY stringByAppendingString:API_PACIFIC_BEACH];
+	NSArray* resultArray = [[FlickrRestAPI query:request] valueForKeyPath:@"places.place"];
+	NSLog(@"result array = %@", resultArray);
+	return [resultArray objectAtIndex:0];
 }
 
 + (NSArray*)photosInPlace:(NSDictionary *)place maxResults:(int)maxResults

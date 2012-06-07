@@ -28,4 +28,8 @@
 + (NSDictionary*)sizesForPhoto:(NSDictionary*)photo;
 + (NSURL*)urlForThumbnailAttributionForPhoto:(NSDictionary*)photo;
 
+#define FLICKR_SAN_DIEGO_URL @"/United+States/California/San+Diego"
+
++ (NSDictionary*)pacificBeach;
+
 @end
