@@ -69,6 +69,7 @@
  - #if kShouldPrintReachabilityFlags moved to streamline code
  - added simple + (BOOL)connectedToNetwork when not waiting for notification for reachability
  - refactored code in several members functions to new member - (struct sockaddr_in)zeroAddress
+ - added simple + (void)alertNetworkUnavailable when simplest message to user required
 
 */
 
@@ -150,6 +151,15 @@ static void ReachabilityCallback(SCNetworkReachabilityRef target,
 		CFRelease(reachabilityRef);
 
 	[super dealloc];
+}
+
++ (void)alertNetworkUnavailable {
+	UIAlertView* alertView = [[UIAlertView alloc] initWithTitle:@"Network unavailable" 
+														message:@"unable to connect"
+													   delegate:nil 
+											  cancelButtonTitle:@"try later"
+											  otherButtonTitles:nil];
+	[alertView show];
 }
 
 + (xolawareReachability*)reachabilityWithHostName:(NSString*)hostName;
