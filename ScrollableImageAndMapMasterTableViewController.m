@@ -9,6 +9,7 @@
 #import "ScrollableImageAndMapMasterTableViewController.h"
 
 #import "UISplitViewController+MasterDetailUtilities.h"
+#import "xolawareReachability.h"
 
 #import "MapViewController.h"
 #import "ScrollableImageDetailViewController.h"
@@ -64,30 +65,34 @@
 }
 
 #pragma mark - UITableViewDelegate protocol 
-
 #pragma mark @optional
-
 
 - (void)						   tableView:(UITableView*)tableView
 	accessoryButtonTappedForRowWithIndexPath:(NSIndexPath*)indexPath
 {
-	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+	if ([xolawareReachability connectedToNetwork])
 	{
-		MapViewController* mapVC
-		  = [[MapViewController alloc] initWithNibName:@"MapViewController" bundle:nil];
-		[self annotateMap:mapVC forRowAtIndexPath:indexPath];
-		
-		self.mapPopover = [[UIPopoverController alloc] initWithContentViewController:mapVC];
-		[self.mapPopover setPopoverContentSize:CGSizeMake(700, 700)];
-		[self.mapPopover presentPopoverFromRect:[tableView rectForRowAtIndexPath:indexPath]
-										 inView:tableView
-					   permittedArrowDirections:UIPopoverArrowDirectionLeft 
-									   animated:YES];
-	} else {		
-		[self performSegueWithIdentifier:@"iPhoneMapView" sender:indexPath];
+		if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+		{
+			MapViewController* mapVC
+			  = [[MapViewController alloc] initWithNibName:@"MapViewController" bundle:nil];
+			[self annotateMap:mapVC forRowAtIndexPath:indexPath];
+			
+			self.mapPopover = [[UIPopoverController alloc] initWithContentViewController:mapVC];
+			[self.mapPopover setPopoverContentSize:CGSizeMake(700, 700)];
+			[self.mapPopover presentPopoverFromRect:[tableView rectForRowAtIndexPath:indexPath]
+											 inView:tableView
+						   permittedArrowDirections:UIPopoverArrowDirectionLeft 
+										   animated:YES];
+		} else {		
+			[self performSegueWithIdentifier:@"iPhoneMapView" sender:indexPath];
+		}
+	}
+	else
+	{
+		[xolawareReachability alertNetworkUnavailable];
 	}
 }
-
 
 #pragma mark - UITableViewDataSource 
 
