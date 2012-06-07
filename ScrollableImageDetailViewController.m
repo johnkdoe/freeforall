@@ -13,6 +13,8 @@
 #import "UISplitViewController+MasterDetailUtilities.h"
 #import "UITabBarController+HideTabBar.h"					// thank you Carlos Oliva
 
+#import "xolawareReachability.h"
+
 @interface ScrollableImageDetailViewController ()
 	<UIPopoverControllerDelegate, FlipsideViewControllerDelegate>
 @property (strong, nonatomic) IBOutlet UITapGestureRecognizer *singleTapGesture;
@@ -21,11 +23,14 @@
 @property (weak, nonatomic) IBOutlet UIScrollView* scrollView;
 @property (weak, nonatomic) IBOutlet UIImageView *blindsImageView;
 @property (weak, nonatomic) UIImageView* nestedImageView;
+@property (weak, nonatomic) IBOutlet UILabel *networkUnavailableLabel;
 
 @property (strong, nonatomic) UIPopoverController *flipsidePopoverController;
 
 @property BOOL barsHidden;
 @property (readonly) CGSize recommendedZoomScales;
+
+@property (strong, nonatomic) xolawareReachability* internetReachability;
 
 @end
 
@@ -45,7 +50,9 @@
 @synthesize scrollView = _scrollView;
 @synthesize blindsImageView = _blindsImageView;
 @synthesize nestedImageView = _nestedImageView;
+@synthesize networkUnavailableLabel = _networkUnavailableLabel;
 
+@synthesize internetReachability = _internetReachability;
 
 - (void)setImage:(UIImage*)uiImage
 {
@@ -62,6 +69,12 @@
 - (void)setBarsHidden:(BOOL)hidden
 {
 	[self setBarsHidden:hidden animated:YES];
+}
+
+- (xolawareReachability*)internetReachability {
+	if (!_internetReachability)
+		_internetReachability = [xolawareReachability reachabilityForInternetConnection];
+	return _internetReachability;
 }
 
 - (CGSize)recommendedZoomScales
@@ -114,8 +127,6 @@
 	return CGRectMake(0, y, self.blindsImageView.frame.size.width, h);
 }
 
-typedef void (^completionBlock)(BOOL);
-
 - (void)nestImageInScrollView
 {
 	typedef void (^animationBlock)(void);
@@ -144,25 +155,47 @@ typedef void (^completionBlock)(BOOL);
 //		NSLog(@"self.blindsImageView.hidden == NO");
 	}
 
-	completionBlock nestImageInScrollView = ^(BOOL finished)
-	{
-		if (_nestedImageView && [self.scrollView.subviews containsObject:_nestedImageView])
+	typedef void (^completionBlock)(BOOL);
+	completionBlock nestImageInScrollView
+	  = ^(BOOL finished)
 		{
-			self.scrollView.zoomScale = 1;
-			[_nestedImageView removeFromSuperview];
-		}
-		self.scrollView.contentSize = _image.size;
-		
-		[self.scrollView addSubview:[[UIImageView alloc] initWithImage:self.image]];
-		_nestedImageView = self.scrollView.subviews.lastObject;
-		
-		CGSize recommendedZoom = self.recommendedZoomScales;
-		self.scrollView.zoomScale = MAX(recommendedZoom.width, recommendedZoom.height);
-		
-		// must come after setZoomScale
-		self.scrollView.contentOffset = CGPointZero;
-		[self hideBlinds];
-	};
+			if (_nestedImageView && [self.scrollView.subviews containsObject:_nestedImageView])
+			{
+				self.scrollView.zoomScale = 1;
+				[_nestedImageView removeFromSuperview];
+			}
+
+			if (self.image)
+			{
+				// the image may have come from cache, and so there may be
+				// no network availability, but we'll live with that for now				
+				self.networkUnavailableLabel.hidden = YES;
+				[self.internetReachability stopNotifier];
+
+				self.scrollView.contentSize = self.image.size;
+				[self.scrollView addSubview:[[UIImageView alloc] initWithImage:self.image]];
+				_nestedImageView = self.scrollView.subviews.lastObject;
+				
+				CGSize recommendedZoom = self.recommendedZoomScales;
+				self.scrollView.zoomScale = MAX(recommendedZoom.width, recommendedZoom.height);
+				
+				// must come after setZoomScale
+				self.scrollView.contentOffset = CGPointZero;
+				[self hideBlinds];	// may only hide them a little if there is no image
+			}
+			else	// no image; may be due to no network availability
+			{
+				BOOL netLabelHidden = self.networkUnavailableLabel.hidden;
+				if ([xolawareReachability connectedToNetwork] != netLabelHidden)
+				{
+					if (netLabelHidden)
+						[self.internetReachability startNotifier];
+					else
+						[self.internetReachability stopNotifier];
+					self.networkUnavailableLabel.hidden = !netLabelHidden;
+				}
+			}
+		};
 
 	[UIView animateWithDuration:duration delay:0.0 options:UIViewAnimationCurveEaseOut
 					 animations:showBlinds
@@ -222,6 +255,13 @@ typedef void (^completionBlock)(BOOL);
 //	}
 }
 
+- (void)reachabilityChanged:(NSNotification*)note
+{
+	xolawareReachability* curReach = [note object];
+	NSParameterAssert([curReach isKindOfClass:[xolawareReachability class]]);
+	self.image = nil;	// stops notifier and hides networkUnavailableLabel
+}
+
 /*
 - (void)showBlinds
 {
@@ -237,14 +277,14 @@ typedef void (^completionBlock)(BOOL);
 {
 	CGFloat y = self.barsHidden ? 0 : self.navigationController.navigationBar.frame.size.height;
 	CGRect hiddenBlindsRect = CGRectMake(0, y, self.blindsImageView.frame.size.width, 0);
-	completionBlock hideBlindsImageView = ^(BOOL finished) {
-		[NSThread sleepForTimeInterval:0.777];
-		self.blindsImageView.hidden = YES;
-	};
 
 	[UIView animateWithDuration:0.666 delay:0.1 options:UIViewAnimationCurveEaseInOut
 					 animations:^{ self.blindsImageView.frame = hiddenBlindsRect; }
-					 completion:hideBlindsImageView ];
+					 completion:^(BOOL finished) {
+						 [NSThread sleepForTimeInterval:0.777];
+						 self.blindsImageView.hidden = YES;
+					 }
+	 ];
 }
 
 #pragma mark - UIViewController life cycle overrides
@@ -268,6 +308,10 @@ typedef void (^completionBlock)(BOOL);
 			setTitleVerticalPositionAdjustment:-2.0 forBarMetrics:UIBarMetricsLandscapePhone];
 	}
 
+	[[NSNotificationCenter defaultCenter] addObserver:self
+											 selector:@selector(reachabilityChanged:)
+												 name:kReachabilityChangedNotification
+											   object:nil];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -297,12 +341,19 @@ typedef void (^completionBlock)(BOOL);
 
 - (void)viewDidUnload
 {
+	[self.internetReachability stopNotifier];
+	[[NSNotificationCenter defaultCenter] removeObserver:self
+													name:kReachabilityChangedNotification
+												  object:nil];
+
+	self.internetReachability = nil;
 	self.nestedImageView = nil;
 	[self setScrollView:nil];		// automatically inserted by Xcode
 	[self setDoubleTapGesture:nil];	// automatically inserted by Xcode
 	[self setTripleTapGesture:nil];	// automatically inserted by Xcode
 	[self setSingleTapGesture:nil];	// automatically isnerted by Xcode
 	[self setBlindsImageView:nil];	// automatically inserted by Xcode
+	[self setNetworkUnavailableLabel:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.
 }
