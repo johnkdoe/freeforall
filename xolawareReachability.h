@@ -66,6 +66,7 @@
  - renamed xolawareReachability to differentiate from the Apple file
  - #import <netinet/in.h> moved to .h to silence warning regarding struct sockaddr_in
  - added simple + (BOOL)connectedToNetwork when not waiting for notification for reachability
+ - added simple + (void)alertNetworkUnavailable when simplest message to user required
 
 */
 
@@ -87,6 +88,7 @@ typedef enum {
 	SCNetworkReachabilityRef reachabilityRef;
 }
 
++ (void)alertNetworkUnavailable;
 + (BOOL)connectedToNetwork;
 
 //reachabilityWithHostName- Use to check the reachability of a particular host name. 
