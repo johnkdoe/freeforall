@@ -11,12 +11,19 @@
 @class FlipsideViewController;
 
 @protocol FlipsideViewControllerDelegate
-- (void)flipsideViewControllerDidFinish:(FlipsideViewController *)controller;
+- (void)flipsideViewControllerDidFinish:(FlipsideViewController*)controller;
 @end
 
 @interface FlipsideViewController : UIViewController
 
+#if __IPHONE_OS_VERSION_MIN_REQUIRED < __IPHONE_4_0
+#error deployment target must be a minimum of iOS 4.0 to use this class
+#elif __IPHONE_OS_VERSION_MIN_REQUIRED > __IPHONE_4_3
 @property (weak, nonatomic) NSURL* originatingURL;
 @property (weak, nonatomic) id<FlipsideViewControllerDelegate> flipsideViewControllerDelegate;
+#else
+@property (unsafe_unretained, nonatomic) NSURL* originatingURL;
+@property (unsafe_unretained, nonatomic) id<FlipsideViewControllerDelegate> flipsideViewControllerDelegate;
+#endif
 
 @end
