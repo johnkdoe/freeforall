@@ -10,9 +10,15 @@
 
 @property (nonatomic) int backCount;
 
-@property (strong, nonatomic) IBOutlet UITapGestureRecognizer *tapRecognizer;
+@property (strong, nonatomic) UITapGestureRecognizer *tapRecognizer;
+
+#if __IPHONE_OS_VERSION_MIN_REQUIRED > __IPHONE_4_3
 @property (readonly, weak, nonatomic) IBOutlet UINavigationItem* flipsideNavigationItem;
 @property (readonly, weak, nonatomic) IBOutlet UIWebView *webView;
+#else
+@property (readonly, unsafe_unretained, nonatomic) IBOutlet UINavigationItem* flipsideNavigationItem;
+@property (readonly, unsafe_unretained, nonatomic) IBOutlet UIWebView *webView;
+#endif
 @end
 
 @implementation FlipsideViewController
@@ -25,7 +31,25 @@
 @synthesize flipsideNavigationItem;
 @synthesize webView;
 
+- (UITapGestureRecognizer*)tapRecognizer {
+	if (!_tapRecognizer)
+		_tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self 
+																 action:@selector(done:)];
+	return _tapRecognizer;
+}
+
 #pragma mark - UIViewController life cycle overrides
+#pragma @optional
+
+- (void)viewDidLoad
+{
+	[super viewDidLoad];
+
+	// if this controller is modal, and style is partial-curl, the user will need a way out,
+	// so recognize a tap as a way out
+	if (self.modalTransitionStyle == UIModalTransitionStylePartialCurl)
+		[self.view addGestureRecognizer:self.tapRecognizer];	// tapRecognizer auto-generated
+}
 
 - (void)viewWillAppear:(BOOL)animated
 {
@@ -53,8 +77,17 @@
 	}
 }
 
-- (void)viewDidUnload {
-	[self setTapRecognizer:nil];	// automatically generated
+- (void)viewDidUnload
+{
+	if (_tapRecognizer)
+	{
+		[self.view removeGestureRecognizer:_tapRecognizer];
+		[self setTapRecognizer:nil];	// automatically generated
+	}
+#if __IPHONE_OS_VERSION_MIN_REQUIRED < __IPHONE_5_0
+	[self setOriginatingURL:nil];	// automatically generated
+	[self setFlipsideViewControllerDelegate:nil];	// automatically generated
+#endif
 	[super viewDidUnload];
 }
 
@@ -65,9 +98,9 @@
 
 #pragma mark - Actions
 
-- (IBAction)done:(UIBarButtonItem*)backButton
+- (IBAction)done:(id)sender
 {
-	if (self.webView.canGoBack)
+	if (self.webView.canGoBack)	// relying on false for a nil webView
 	{
 		[self.webView goBack];
 		self.flipsideNavigationItem.rightBarButtonItem.enabled = YES;
