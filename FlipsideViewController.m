@@ -47,7 +47,7 @@
 
 	// if this controller is modal, and style is partial-curl, the user will need a way out,
 	// so recognize a tap as a way out
-	if (self.modalTransitionStyle == UIModalTransitionStylePartialCurl)
+	if (self.modalTransitionStyle == UIModalTransitionStylePartialCurl && !self.webView)
 		[self.view addGestureRecognizer:self.tapRecognizer];	// tapRecognizer auto-generated
 }
 
