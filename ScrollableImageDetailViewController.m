@@ -56,18 +56,18 @@
 
 - (void)setImage:(UIImage*)uiImage
 {
+	if (self.barsHidden)
+		[self setBarsHidden:NO animated:NO];
 	_image = uiImage;
 	if (self.scrollView)			// this method can be invoked before viewDidLoad on iPhone
 		[self nestImageInScrollView];
 }
 
-- (BOOL)barsHidden
-{
+- (BOOL)barsHidden {
 	return self.navigationController.navigationBarHidden;
 }
 
-- (void)setBarsHidden:(BOOL)hidden
-{
+- (void)setBarsHidden:(BOOL)hidden {
 	[self setBarsHidden:hidden animated:YES];
 }
 
@@ -203,13 +203,19 @@
 
 - (void)setBarsHidden:(BOOL)hidden animated:(BOOL)animated
 {
-	[self.navigationController setNavigationBarHidden:hidden animated:animated];
+	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
+	{
+		// status bar first, because otherwise the navigation bar is in the wrong place
+		[[UIApplication sharedApplication] setStatusBarHidden:hidden
+												withAnimation:UIStatusBarAnimationSlide];
 
-	id parent = self.navigationController.parentViewController;
-	if ([parent respondsToSelector:@selector(isTabBarHidden)]
-		&& hidden != [parent isTabBarHidden]
-		&& [parent respondsToSelector:@selector(setTabBarHidden:animated:)])
-		[parent setTabBarHidden:hidden animated:animated];
+		id parent = self.navigationController.parentViewController;
+		if ([parent respondsToSelector:@selector(isTabBarHidden)]
+			&& hidden != [parent isTabBarHidden]
+			&& [parent respondsToSelector:@selector(setTabBarHidden:animated:)])
+			[parent setTabBarHidden:hidden animated:animated];
+	}
+	[self.navigationController setNavigationBarHidden:hidden animated:animated];
 	
 //	else if ([parent isKindOfClass:[UISplitViewController class]]
 //			 && UIInterfaceOrientationIsLandscape([[UIDevice currentDevice] orientation]))
@@ -295,7 +301,7 @@
 	if (self.image)						// in iPhone segue, image will get set before load
 		[self nestImageInScrollView];
 
-	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad)
 	{
 		[self resetSplitViewBarButtonTitle];
 	}
