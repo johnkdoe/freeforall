@@ -321,6 +321,7 @@
 
 - (void)viewDidAppear:(BOOL)animated
 {
+	[super viewDidAppear:animated];
 	[self.doubleTapGesture requireGestureRecognizerToFail:self.tripleTapGesture];
 	[self.singleTapGesture requireGestureRecognizerToFail:self.doubleTapGesture];
 

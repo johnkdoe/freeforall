@@ -6,10 +6,10 @@
 
 #include "xolawareOpenSourceCopyright.h"	//  Copyright (c) 2012 xolaware.
 
-#import <UIKit/UIKit.h>
+#import "KludgeWorkaroundForBuggySplitViewDelegateStartup.h"
 
 @interface ScrollableImageDetailViewController
-  : UIViewController<UIScrollViewDelegate, UISplitViewControllerDelegate>;
+  : KludgeWorkaroundForBuggySplitViewDelegateStartup<UIScrollViewDelegate>;
 
 @property (strong, nonatomic) UIImage* image;
 @property (strong, nonatomic) NSURL* originatingURL;
