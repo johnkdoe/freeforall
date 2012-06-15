@@ -11,6 +11,7 @@
 #import "UISplitViewController+MasterDetailUtilities.h"
 #import "xolawareReachability.h"
 
+#import "FlipsideViewController.h"
 #import "MapViewController.h"
 #import "ScrollableImageDetailViewController.h"
 
@@ -72,7 +73,7 @@
 {
 	if ([xolawareReachability connectedToNetwork])
 	{
-		if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+		if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad)
 		{
 			MapViewController* mapVC
 			  = [[MapViewController alloc] initWithNibName:@"MapViewController" bundle:nil];
@@ -115,6 +116,14 @@
 {
     // Return NO if you do not want the specified item to be editable.
     return NO;
+}
+
+#pragma mark - FlipsideViewControllerDelegate implementation
+
+- (void)flipsideViewControllerDidFinish:(FlipsideViewController*)controller
+{
+    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
+        [self dismissModalViewControllerAnimated:YES];
 }
 
 @end
