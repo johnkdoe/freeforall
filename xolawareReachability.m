@@ -154,11 +154,12 @@ static void ReachabilityCallback(SCNetworkReachabilityRef target,
 }
 
 + (void)alertNetworkUnavailable {
-	UIAlertView* alertView = [[UIAlertView alloc] initWithTitle:@"Network unavailable" 
-														message:@"unable to connect"
-													   delegate:nil 
-											  cancelButtonTitle:@"try later"
-											  otherButtonTitles:nil];
+	UIAlertView* alertView
+	  = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"network unavailable", nil)
+								   message:NSLocalizedString(@"unable to connect", nil)
+								  delegate:nil 
+						 cancelButtonTitle:NSLocalizedString(@"try later", nil)
+						 otherButtonTitles:nil];
 	[alertView show];
 }
 
