@@ -13,10 +13,8 @@
 @property (strong, nonatomic) UITapGestureRecognizer *tapRecognizer;
 
 #if __IPHONE_OS_VERSION_MIN_REQUIRED > __IPHONE_4_3
-@property (readonly, weak, nonatomic) IBOutlet UINavigationItem* flipsideNavigationItem;
 @property (readonly, weak, nonatomic) IBOutlet UIWebView *webView;
 #else
-@property (readonly, unsafe_unretained, nonatomic) IBOutlet UINavigationItem* flipsideNavigationItem;
 @property (readonly, unsafe_unretained, nonatomic) IBOutlet UIWebView *webView;
 #endif
 @end
@@ -28,7 +26,7 @@
 
 @synthesize backCount = _backCount;
 @synthesize tapRecognizer = _tapRecognizer;
-@synthesize flipsideNavigationItem;
+//@synthesize flipsideNavigationItem;
 @synthesize webView;
 
 - (UITapGestureRecognizer*)tapRecognizer {
@@ -44,6 +42,7 @@
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
+	self.navigationItem.title = NSLocalizedString(self.navigationItem.title, nil);
 
 	// if this controller is modal, and style is partial-curl, the user will need a way out,
 	// so recognize a tap as a way out
@@ -103,7 +102,7 @@
 	if (self.webView.canGoBack)	// relying on false for a nil webView
 	{
 		[self.webView goBack];
-		self.flipsideNavigationItem.rightBarButtonItem.enabled = YES;
+		self.navigationItem.rightBarButtonItem.enabled = YES;
 	}
 	else
 		[self.flipsideViewControllerDelegate flipsideViewControllerDidFinish:self];
@@ -122,7 +121,7 @@
 
 - (void)webViewDidFinishLoad:(UIWebView*)webView
 {
-	self.flipsideNavigationItem.rightBarButtonItem.enabled = self.webView.canGoForward;
+	self.navigationItem.rightBarButtonItem.enabled = self.webView.canGoForward;
 }
 
 @end
