@@ -14,6 +14,6 @@
 	: UITableViewController <FlipsideViewControllerDelegate>
 @property (strong, nonatomic) NSArray* objects;
 
-- (void)annotateMap:(MapViewController*)mapVC forRowAtIndexPath:(NSIndexPath*)indexPath;
+- (BOOL)annotateMap:(MapViewController*)mapVC forRowAtIndexPath:(NSIndexPath*)indexPath;
 
 @end

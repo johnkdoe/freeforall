@@ -25,9 +25,27 @@
 @synthesize mapPopover = _mapPopover;
 @synthesize objects = _objects;
 
-- (void)setObjects:(NSArray *)objects
+- (void)setObjects:(NSArray *)newObjects
 {
-	_objects = objects;
+	int delta;
+	if (_objects && newObjects && 0 < (delta = newObjects.count - _objects.count))
+	{
+		NSArray* newObjectsHead = [newObjects subarrayWithRange:NSMakeRange(0, _objects.count)];
+		if ([newObjectsHead isEqualToArray:_objects])
+		{
+			NSMutableArray* newIndexPaths = [NSMutableArray arrayWithCapacity:delta];
+			for (int i = _objects.count; i < newObjects.count ; ++i)
+				[newIndexPaths addObject:[NSIndexPath indexPathForRow:i inSection:0]];
+			[self.tableView beginUpdates];
+			_objects = newObjects;
+			[self.tableView insertRowsAtIndexPaths:newIndexPaths
+								  withRowAnimation:UITableViewRowAnimationBottom];
+			[self.tableView endUpdates];
+			return;
+		}
+	}
+
+	_objects = newObjects;
 	[self.tableView reloadData];
 }
 
@@ -60,9 +78,10 @@
 
 #pragma mark - ScrollableImageAndMapMasterTableViewController
 
-- (void)annotateMap:(MapViewController*)mapVC forRowAtIndexPath:(NSIndexPath*)indexPath
+- (BOOL)annotateMap:(MapViewController*)mapVC forRowAtIndexPath:(NSIndexPath*)indexPath
 {
 	mapVC.delegate = self;
+	return YES;
 }
 
 #pragma mark - UITableViewDelegate protocol 
@@ -106,8 +125,7 @@
 
 #pragma mark @optional
 
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
-{
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
 	return _objects.count;
 }
 
