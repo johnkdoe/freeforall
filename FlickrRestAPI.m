@@ -77,7 +77,6 @@
 {
 	NSString* request = [API_REST_QUERY stringByAppendingString:API_PACIFIC_BEACH];
 	NSArray* resultArray = [[FlickrRestAPI query:request] valueForKeyPath:@"places.place"];
-	NSLog(@"result array = %@", resultArray);
 	return [resultArray objectAtIndex:0];
 }
 
