@@ -31,13 +31,14 @@
 
 #define API_EXTRAS_ARGS	@"&extras=original_format,tags,description,geo,owner_name,place_url,license,url_s"
 
-#define API_GEOREF_ARGS_FORMAT	@".photos.search&per_page=500&license=1,2,3,4,7&has_geo=1%@"
-#define API_PLACE_ARGS_FORMAT	@".places.getInfo&place_id=%@"
-#define API_PLACE_PHOTOS_FORMAT	@".photos.search&has_geo=1&place_id=%@&per_page=%d%@"
-#define API_PHOTO_SIZES_FORMAT	@".photos.getSizes&photo_id=%@"
-#define API_TOP_PLACES_ARGS		@".places.getTopPlacesList&place_type_id=7"
+#define API_GEOREF_ARGS_FORMAT		@".photos.search&per_page=500&license=1,2,3,4,7&has_geo=1%@"
+#define API_PLACE_ARGS_FORMAT		@".places.getInfo&place_id=%@"
+#define API_PLACE_PHOTOS_FORMAT		@".photos.search&has_geo=1&place_id=%@&per_page=%d%@"
+#define API_PHOTO_SIZES_FORMAT		@".photos.getSizes&photo_id=%@"
+#define API_RECENT_UPLOADS_FORMAT	@".photos.recentlyUpdated&auth_token=72157630139169760-38bd6548de38d165&min_date=%@"
+#define API_TOP_PLACES_ARGS			@".places.getTopPlacesList&place_type_id=7"
 
-#define API_PACIFIC_BEACH		@".places.find&query=Pacific+Beach%2C+California%2C+92109"
+#define API_PACIFIC_BEACH			@".places.find&query=Pacific+Beach%2C+California%2C+92109"
 
 @implementation FlickrRestAPI
 
@@ -45,9 +46,11 @@
 {
     query = [query stringByAppendingFormat:@"&format=json&nojsoncallback=1&api_key=%@", API_KEY];
     query = [query stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+	[UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
     NSData* jsonData = [[NSString stringWithContentsOfURL:[NSURL URLWithString:query]
 												 encoding:NSUTF8StringEncoding error:nil]
 						dataUsingEncoding:NSUTF8StringEncoding];
+	[UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
     return jsonData ? [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:nil] : nil;
 }
 
@@ -92,6 +95,25 @@
     }
     return nil;
 }
+
++ (NSArray*)recentUsingFormat:(NSString*)apiFormat count:(int)maxResults page:(int)page
+{
+	NSString* request = [API_REST_QUERY stringByAppendingFormat:apiFormat, maxResults, page,
+																API_EXTRAS_ARGS];
+	return [[FlickrRestAPI query:request] valueForKeyPath:@"photos.photo"];
+}
+
+#ifdef DEBUG
+#define API_XOLAWARE_SET_FORMAT		@".photosets.getPhotos&photoset_id=72157630005748939%@"
++ (NSArray*)xolawareSet:(int)maxResults
+{
+//	NSDate* twelveWeeksAgo = [NSDate dateWithTimeIntervalSinceNow:-(60*60*24*7*12)];
+//	NSString* minDate = [[twelveWeeksAgo description] substringToIndex:10];
+	NSString* request
+	  = [API_REST_QUERY stringByAppendingFormat:API_XOLAWARE_SET_FORMAT, API_EXTRAS_ARGS];
+	return [[FlickrRestAPI query:request] valueForKeyPath:@"photoset.photo"];
+}
+#endif
 
 + (NSString*)farmURLforPhoto:(NSDictionary*)photo withFormat:(NSString*)format
 {
@@ -206,7 +228,6 @@
 			if (!fallback || smallFallBack)
 				fallback = [size valueForKey:@"url"];
 		}
-		
 	}
 
 	if (fallback)
