@@ -292,6 +292,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+	self.navigationItem.title = NSLocalizedString(self.navigationItem.title, nil);
 	self.scrollView.delegate = self;
 	if (self.image)						// in iPhone segue, image will get set before load
 		[self nestImageInScrollView];
@@ -492,7 +493,11 @@
 		  withBarButtonItem:(UIBarButtonItem*)barButtonItem
 	   forPopoverController:(UIPopoverController *)popoverController
 {
-    [self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
+	[super splitViewController:splitController
+		willHideViewController:viewController
+			 withBarButtonItem:barButtonItem
+		  forPopoverController:popoverController];
+//	[self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
 	[self resetSplitViewBarButtonTitle];
 }
 
@@ -500,8 +505,15 @@
 	 willShowViewController:(UIViewController*)viewController
   invalidatingBarButtonItem:(UIBarButtonItem *)barButtonItem
 {
+	[super splitViewController:splitController
+		willShowViewController:viewController
+	 invalidatingBarButtonItem:barButtonItem];
     // Called when the view is shown again in the split view, invalidating the button and popover controller.
-    [self.navigationItem setLeftBarButtonItem:nil animated:YES];
+//	[self.navigationItem setLeftBarButtonItem:nil animated:YES];
+}
+
+- (NSString*)kludgeWorkaroundMasterViewButtonStartupTitle {
+	return NSLocalizedString(@"top places", "");
 }
 
 @end
