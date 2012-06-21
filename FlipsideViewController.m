@@ -13,8 +13,10 @@
 @property (strong, nonatomic) UITapGestureRecognizer *tapRecognizer;
 
 #if __IPHONE_OS_VERSION_MIN_REQUIRED > __IPHONE_4_3
+@property (readonly, weak, nonatomic) IBOutlet UINavigationItem *flipsideNavigationItem;
 @property (readonly, weak, nonatomic) IBOutlet UIWebView *webView;
 #else
+@property (readonly, unsafe_unretained, nonatomic) IBOutlet UINavigationItem *flipsideNavigationItem;
 @property (readonly, unsafe_unretained, nonatomic) IBOutlet UIWebView *webView;
 #endif
 @end
@@ -26,7 +28,7 @@
 
 @synthesize backCount = _backCount;
 @synthesize tapRecognizer = _tapRecognizer;
-//@synthesize flipsideNavigationItem;
+@synthesize flipsideNavigationItem;
 @synthesize webView;
 
 - (UITapGestureRecognizer*)tapRecognizer {
@@ -42,7 +44,10 @@
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
-	self.navigationItem.title = NSLocalizedString(self.navigationItem.title, nil);
+
+	// cover both bases in case the flipside segue is normal navigation or modal with its own navigationItem
+	self.navigationItem.title = NSLocalizedString(self.navigationItem.title, nil);;
+	self.flipsideNavigationItem.title = NSLocalizedString(self.flipsideNavigationItem.title, nil);;
 
 	// if this controller is modal, and style is partial-curl, the user will need a way out,
 	// so recognize a tap as a way out
