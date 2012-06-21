@@ -54,7 +54,8 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)
+	self.navigationItem.title = NSLocalizedString(self.navigationItem.title, nil);
+	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
 	{
 		[self.navigationController.navigationBar
 			setTitleVerticalPositionAdjustment:-2.0 forBarMetrics:UIBarMetricsDefault];
