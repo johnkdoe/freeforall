@@ -24,6 +24,30 @@
 
 @synthesize mapPopover = _mapPopover;
 @synthesize objects = _objects;
+@synthesize retrievalDate = _retrievalDate;
+@synthesize systemLocaleFormatter = _systemLocaleFormatter;
+
+- (NSDateFormatter*)systemLocaleFormatter
+{
+	if (!_systemLocaleFormatter)
+	{
+		_systemLocaleFormatter = [[NSDateFormatter alloc] init];
+		_systemLocaleFormatter.locale = [NSLocale systemLocale];
+	}
+	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
+	{
+		_systemLocaleFormatter.dateStyle = NSDateFormatterShortStyle;
+		if (UIDeviceOrientationIsPortrait([[UIDevice currentDevice] orientation]))
+			_systemLocaleFormatter.timeStyle = NSDateFormatterShortStyle;
+		else
+			_systemLocaleFormatter.timeStyle = NSDateFormatterMediumStyle;
+	}
+	else
+		_systemLocaleFormatter.dateStyle = NSDateFormatterMediumStyle,
+		_systemLocaleFormatter.timeStyle = NSDateFormatterMediumStyle;
+	return _systemLocaleFormatter;
+
+}
 
 - (void)setObjects:(NSArray *)newObjects
 {
@@ -49,12 +73,23 @@
 	[self.tableView reloadData];
 }
 
+#pragma mark - public implementation
+
+- (void)setDateBasedTitleForOrientation:(UIInterfaceOrientation)orientation
+{
+	NSString* localeDate = [self.systemLocaleFormatter stringFromDate:self.retrievalDate];
+	if (UIDeviceOrientationIsLandscape(orientation) && !self.splitViewController)
+		localeDate = [NSLocalizedString(self.title, nil)
+					  stringByAppendingFormat:@": %@", localeDate];
+	self.navigationItem.title = localeDate;	
+}
+
 #pragma mark - UITableViewController life cycle // overrides
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	self.navigationItem.title = NSLocalizedString(self.navigationItem.title, nil);
+	self.title = NSLocalizedString(self.title, nil);
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
 	{
 		[self.navigationController.navigationBar
@@ -119,8 +154,7 @@
 
 #pragma mark @required	// see subclasses for full protocol implementors
 
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
-{
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
 	return 1;
 }
 
@@ -139,10 +173,25 @@
 
 #pragma mark - FlipsideViewControllerDelegate implementation
 
+- (BOOL)scrollsToTop {
+	return self.tableView.scrollsToTop;
+}
+
+- (void)setScrollsToTop:(BOOL)scrollsToTop{
+	self.tableView.scrollsToTop = scrollsToTop;
+}
+
 - (void)flipsideViewControllerDidFinish:(FlipsideViewController*)controller
 {
     if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
-        [self dismissModalViewControllerAnimated:YES];
+        [self dismissModalViewControllerAnimated:YES];		
+}
+
+#pragma mark - SecondaryQueuePhotoReceiver implementation
+
+// expected to run only on non-main queue
+- (void)showPhotos:(NSArray*)photos {
+	dispatch_async(dispatch_get_main_queue(), ^ { self.objects = photos; });
 }
 
 @end
