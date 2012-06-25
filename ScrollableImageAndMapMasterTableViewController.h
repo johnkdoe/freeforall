@@ -7,12 +7,18 @@
 #include "xolawareOpenSourceCopyright.h"	//  Copyright (c) 2012 xolaware.
 
 #import "FlipsideViewController.h"
+#import "SecondaryQueuePhotoReceiver.h"
 
 @class MapViewController;
 
 @interface ScrollableImageAndMapMasterTableViewController
-	: UITableViewController <FlipsideViewControllerDelegate>
+	: UITableViewController <FlipsideViewControllerDelegate, SecondaryQueuePhotoReceiver>
 @property (strong, nonatomic) NSArray* objects;
+@property (strong, nonatomic) NSDate* retrievalDate;
+@property (readonly, strong, nonatomic) NSDateFormatter* systemLocaleFormatter;
+@property (nonatomic) BOOL scrollsToTop;
+
+- (void)setDateBasedTitleForOrientation:(UIInterfaceOrientation)orientation;
 
 - (BOOL)annotateMap:(MapViewController*)mapVC forRowAtIndexPath:(NSIndexPath*)indexPath;
 
