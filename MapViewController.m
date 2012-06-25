@@ -80,7 +80,7 @@
 		if (self.annotations.count == 1)
 		{
 			id<MKAnnotation> annotation = self.annotations.lastObject;
-			self.navigationItem.title = annotation.title;
+			self.title = annotation.title;
 			self.mapView.region
 			  = MKCoordinateRegionMake(annotation.coordinate, MKCoordinateSpanMake(0.2, 0.2));
 		}
