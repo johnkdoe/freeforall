@@ -5,8 +5,6 @@
 
 #import "FlickrRestAPI.h"
 
-#define API_KEY @"ef789e4178df7b18913a932a32549945"
-
 /* 
  
  from http://www.flickr.com/services/api/flickr.photos.licenses.getInfo.html
@@ -27,7 +25,24 @@
 				 url="http://flickr.com/commons/usage/" />
  */
 
+/*
+ available locales for flickr feeds
+
+ de-de		German
+ en-us		English
+ es-us		Spanish
+ fr-fr		French
+ it-it		Italian
+ ko-kr		Korean
+ pt-br		Portuguese (Brazilian)
+ zh-hk		Traditional Chinese (Hong Kong)
+
+ */
+
 #define API_REST_QUERY	@"http://api.flickr.com/services/rest/?method=flickr"
+
+#define API_KEY @"ef789e4178df7b18913a932a32549945"
+#define API_LANG_FORMAT	@"&lang=%@&format=json&nojsoncallback=1&api_key=ef789e4178df7b18913a932a32549945"
 
 #define API_EXTRAS_ARGS	@"&extras=original_format,tags,description,geo,owner_name,place_url,license,url_s"
 
@@ -42,16 +57,39 @@
 
 @implementation FlickrRestAPI
 
++ (NSDictionary*)availableLanguages {
+	static NSDictionary* _availableLanguages;
+	if (!_availableLanguages)
+		_availableLanguages = [NSDictionary dictionaryWithObjectsAndKeys:@"de-de", @"de",
+																		 @"en-us", @"en",
+																		 @"es-us", @"es",
+																		 @"fr-fr", @"fr",
+																		 @"it-it", @"it",
+																		 @"pt-br", @"pt",
+																		 @"zh-hk", @"zh",
+																		 nil];
+	return _availableLanguages;
+}
+
 + (NSDictionary *)query:(NSString *)query
 {
-    query = [query stringByAppendingFormat:@"&format=json&nojsoncallback=1&api_key=%@", API_KEY];
-    query = [query stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+	NSString* preferredLang = [[NSLocale preferredLanguages] objectAtIndex:0];
+//	NSLog(@"system language chosen by user = %@", preferredLang);
+	if (!(preferredLang = [[self availableLanguages] objectForKey:preferredLang]))
+		preferredLang = @"en-us";
+//	NSLog(@"flickr available language chosen = %@", preferredLang);
+	query = [query stringByAppendingFormat:API_LANG_FORMAT, preferredLang];
+	query = [query stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+//	NSLog(@"query = %@", query);
 	[UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
-    NSData* jsonData = [[NSString stringWithContentsOfURL:[NSURL URLWithString:query]
+	NSData* jsonData = [[NSString stringWithContentsOfURL:[NSURL URLWithString:query]
 												 encoding:NSUTF8StringEncoding error:nil]
 						dataUsingEncoding:NSUTF8StringEncoding];
 	[UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-    return jsonData ? [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:nil] : nil;
+	return jsonData ? [NSJSONSerialization JSONObjectWithData:jsonData
+													  options:0
+														error:nil]
+					: nil;
 }
 
 + (NSDictionary*)readablePlaceParts:(NSDictionary*)photo
