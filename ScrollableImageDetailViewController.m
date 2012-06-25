@@ -94,12 +94,11 @@
 - (void)resetSplitViewBarButtonTitle
 {
 	UINavigationController* nc = self.splitViewController.selectedTabBarNavigationController;
-	self.navigationItem.leftBarButtonItem.title = nc.topViewController.navigationItem.title;
+	self.navigationItem.leftBarButtonItem.title = nc.topViewController.title;
 }
 
-- (void)setImageTitle:(NSString*)imageTitle
-{
-	self.navigationItem.title = imageTitle;
+- (void)setImageTitle:(NSString*)imageTitle {
+	self.title = imageTitle;
 }
 
 #pragma mark - ScrollableImageDetailViewController private implementation
@@ -204,6 +203,21 @@
 
 - (void)setBarsHidden:(BOOL)hidden animated:(BOOL)animated
 {
+	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
+	{
+		// status bar first, because otherwise the navigation bar is in the wrong place
+		[[UIApplication sharedApplication] setStatusBarHidden:hidden
+												withAnimation:UIStatusBarAnimationSlide];
+
+		id parent = self.navigationController.parentViewController;
+		if ([parent respondsToSelector:@selector(isTabBarHidden)]
+			&& hidden != [parent isTabBarHidden]
+			&& [parent respondsToSelector:@selector(setTabBarHidden:animated:)])
+			[parent setTabBarHidden:hidden animated:animated];
+		UIStatusBarAnimation animation
+		  = animated ? UIStatusBarAnimationSlide : UIStatusBarAnimationNone;
+		[[UIApplication sharedApplication] setStatusBarHidden:hidden withAnimation:animation];
+	}
 	[self.navigationController setNavigationBarHidden:hidden animated:animated];
 
 	id parent = self.navigationController.parentViewController;
@@ -257,9 +271,13 @@
 
 - (void)reachabilityChanged:(NSNotification*)note
 {
+#if DEBUG
 	xolawareReachability* curReach = [note object];
 	NSParameterAssert([curReach isKindOfClass:[xolawareReachability class]]);
-	self.image = nil;	// stops notifier and hides networkUnavailableLabel
+#endif
+
+	// setImage: -> nestImageInScrollView => stops notifier + hides networkUnavailableIndicator
+	self.image = nil;
 }
 
 /*
@@ -292,7 +310,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	self.navigationItem.title = NSLocalizedString(self.navigationItem.title, nil);
+	self.title = NSLocalizedString(self.title, nil);
 	self.scrollView.delegate = self;
 	if (self.image)						// in iPhone segue, image will get set before load
 		[self nestImageInScrollView];
@@ -318,6 +336,8 @@
 - (void)viewDidAppear:(BOOL)animated
 {
 	[super viewDidAppear:animated];
+	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
+		[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackTranslucent;
 	[self.doubleTapGesture requireGestureRecognizerToFail:self.tripleTapGesture];
 	[self.singleTapGesture requireGestureRecognizerToFail:self.doubleTapGesture];
 
@@ -329,7 +349,9 @@
 {
 	if (self.barsHidden)
 		[self setBarsHidden:NO animated:animated];
-	
+
+	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
+		[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackOpaque;
 	[super viewWillDisappear:animated];
 }
 
