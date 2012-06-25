@@ -9,8 +9,9 @@
 @interface FlipsideViewController () <UIWebViewDelegate>
 
 @property (nonatomic) int backCount;
+@property (nonatomic) BOOL delegateScrollsToTop;
 
-@property (strong, nonatomic) UITapGestureRecognizer *tapRecognizer;
+@property (strong, nonatomic) IBOutlet UITapGestureRecognizer *tapRecognizer;
 
 #if __IPHONE_OS_VERSION_MIN_REQUIRED > __IPHONE_4_3
 @property (readonly, weak, nonatomic) IBOutlet UINavigationItem *flipsideNavigationItem;
@@ -27,6 +28,7 @@
 @synthesize originatingURL = _originatingURL;
 
 @synthesize backCount = _backCount;
+@synthesize delegateScrollsToTop = _delegateScrollsToTop;
 @synthesize tapRecognizer = _tapRecognizer;
 @synthesize flipsideNavigationItem;
 @synthesize webView;
@@ -45,20 +47,20 @@
 {
 	[super viewDidLoad];
 
-	// cover both bases in case the flipside segue is normal navigation or modal with its own navigationItem
-	self.navigationItem.title = NSLocalizedString(self.navigationItem.title, nil);;
-	self.flipsideNavigationItem.title = NSLocalizedString(self.flipsideNavigationItem.title, nil);;
+	// cover both bases in case the flipside segue is normal navigation
+	// or modal with its own navigationItem
+	self.flipsideNavigationItem.title = self.title = NSLocalizedString(self.title, nil);
 
-	// if this controller is modal, and style is partial-curl, the user will need a way out,
-	// so recognize a tap as a way out
-	if (self.modalTransitionStyle == UIModalTransitionStylePartialCurl && !self.webView)
+	// if this controller is modal and there's not a webView, then allow a tap anywhere on
+	// the page to be recognozed as a way out
+	if (self.modalViewController && !self.webView)
 		[self.view addGestureRecognizer:self.tapRecognizer];	// tapRecognizer auto-generated
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
-
+			 
 	// could have lived with self.webView being nil in all message passing below,
 	// but why go through the trouble of looking up the URL, etc, if no webView exists
 	if (self.webView)
@@ -66,8 +68,16 @@
 		self.webView.delegate = self;		// to enable fwd button in webViewDidFinishLoad:
 
 		// allow a little zooming, since the pages come up really small on iPhone
-		self.webView.scrollView.minimumZoomScale = 0.8;
-		self.webView.scrollView.maximumZoomScale = 2.0;
+		self.webView.scalesPageToFit = YES;
+		self.webView.scrollView.minimumZoomScale = 0.25;
+		self.webView.scrollView.maximumZoomScale = 1.75;
+		if ([self.flipsideViewControllerDelegate respondsToSelector:@selector(setScrollsToTop:)]
+			&& [self.flipsideViewControllerDelegate respondsToSelector:@selector(scrollsToTop)]
+			&& (_delegateScrollsToTop = self.flipsideViewControllerDelegate.scrollsToTop))
+		{
+			self.flipsideViewControllerDelegate.scrollsToTop = NO;
+			self.webView.scrollView.scrollsToTop = YES;			
+		}
 
 		NSURL* url = self.originatingURL;
 		if (!url)
@@ -79,6 +89,21 @@
 
 		[self.webView loadRequest:[NSURLRequest requestWithURL:url]];
 	}
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+	// necessary to do this here, because done may be skipped if the user taps on
+	// the partial curl part to pop the modal view controller away
+	if ([self.flipsideViewControllerDelegate respondsToSelector:@selector(setScrollsToTop:)]
+		&& _delegateScrollsToTop)
+	{
+		self.webView.scrollView.scrollsToTop = NO;
+		self.flipsideViewControllerDelegate.scrollsToTop = YES;
+		_delegateScrollsToTop = NO;
+	}
+
+	[super viewWillDisappear:animated];
 }
 
 - (void)viewDidUnload
@@ -95,8 +120,7 @@
 	[super viewDidUnload];
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
 	return YES;
 }
 
@@ -107,10 +131,12 @@
 	if (self.webView.canGoBack)	// relying on false for a nil webView
 	{
 		[self.webView goBack];
-		self.navigationItem.rightBarButtonItem.enabled = YES;
+		self.flipsideNavigationItem.rightBarButtonItem.enabled = YES;
 	}
 	else
+	{
 		[self.flipsideViewControllerDelegate flipsideViewControllerDidFinish:self];
+	}
 }
 
 - (IBAction)forward:(UIBarButtonItem*)forwardButton
@@ -124,9 +150,8 @@
 #pragma mark - UIWebViewDelegate implementation
 #pragma mark @optional
 
-- (void)webViewDidFinishLoad:(UIWebView*)webView
-{
-	self.navigationItem.rightBarButtonItem.enabled = self.webView.canGoForward;
+- (void)webViewDidFinishLoad:(UIWebView*)webView {
+	self.flipsideNavigationItem.rightBarButtonItem.enabled = self.webView.canGoForward;
 }
 
 @end

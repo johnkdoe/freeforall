@@ -10,8 +10,10 @@
 
 @class FlipsideViewController;
 
-@protocol FlipsideViewControllerDelegate
+@protocol FlipsideViewControllerDelegate <NSObject>
 - (void)flipsideViewControllerDidFinish:(FlipsideViewController*)controller;
+@optional
+@property (nonatomic) BOOL scrollsToTop;
 @end
 
 @interface FlipsideViewController : UIViewController
