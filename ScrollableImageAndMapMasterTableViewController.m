@@ -49,7 +49,7 @@
 
 }
 
-- (void)setObjects:(NSArray *)newObjects
+- (void)setObjects:(NSArray*)newObjects
 {
 	int delta;
 	if (_objects && newObjects && 0 < (delta = newObjects.count - _objects.count))
@@ -82,6 +82,10 @@
 		localeDate = [NSLocalizedString(self.title, nil)
 					  stringByAppendingFormat:@": %@", localeDate];
 	self.navigationItem.title = localeDate;	
+}
+
+- (void)tableViewReorderedPhotosData:(NSArray *)reorderedPhotosData {
+	_objects = reorderedPhotosData;
 }
 
 #pragma mark - UITableViewController life cycle // overrides
@@ -120,6 +124,36 @@
 	return YES;
 }
 
+#pragma mark - UITableViewDataSource 
+
+#pragma mark @required	// see subclasses for full protocol implementors
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+	return 1;
+}
+
+#pragma mark @optional
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+	return _objects.count;
+}
+
+- (BOOL)tableView:(UITableView*)tableView canEditRowAtIndexPath:(NSIndexPath*)indexPath {
+    return tableView.isEditing;
+}
+
+-(void)		 tableView:(UITableView*)tableView
+	moveRowAtIndexPath:(NSIndexPath*)sourceIndexPath
+		   toIndexPath:(NSIndexPath*)destinationIndexPath
+{
+	NSMutableArray* reorderedObjects = self.objects.mutableCopy;
+	NSObject* objectToMove = [reorderedObjects objectAtIndex:sourceIndexPath.row];
+	[reorderedObjects removeObjectAtIndex:sourceIndexPath.row];
+	[reorderedObjects insertObject:objectToMove atIndex:destinationIndexPath.row];
+	[self tableViewReorderedPhotosData:[NSArray arrayWithArray:reorderedObjects]];
+	self.objects = [reorderedObjects copy];
+}
+
 #pragma mark - UITableViewDelegate protocol 
 #pragma mark @optional
 
@@ -148,27 +182,6 @@
 	{
 		[xolawareReachability alertNetworkUnavailable];
 	}
-}
-
-#pragma mark - UITableViewDataSource 
-
-#pragma mark @required	// see subclasses for full protocol implementors
-
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-	return 1;
-}
-
-#pragma mark @optional
-
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-	return _objects.count;
-}
-
-- (BOOL)		tableView:(UITableView *)tableView
-	canEditRowAtIndexPath:(NSIndexPath*)indexPath
-{
-    // Return NO if you do not want the specified item to be editable.
-    return NO;
 }
 
 #pragma mark - FlipsideViewControllerDelegate implementation

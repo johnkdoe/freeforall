@@ -18,8 +18,10 @@
 @property (readonly, strong, nonatomic) NSDateFormatter* systemLocaleFormatter;
 @property (nonatomic) BOOL scrollsToTop;
 
-- (void)setDateBasedTitleForOrientation:(UIInterfaceOrientation)orientation;
-
 - (BOOL)annotateMap:(MapViewController*)mapVC forRowAtIndexPath:(NSIndexPath*)indexPath;
+
+- (void)tableViewReorderedPhotosData:(NSArray*)reorderedPhotosData;
+
+- (void)setDateBasedTitleForOrientation:(UIInterfaceOrientation)orientation;
 
 @end
