@@ -102,6 +102,21 @@
 						   forControlEvents:UIControlEventValueChanged];
 }
 
+- (void)viewDidAppear:(BOOL)animated {
+	[super viewDidAppear:animated];
+	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
+		[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackTranslucent;
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
+	{
+		[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackOpaque;
+		[self.navigationController popViewControllerAnimated:YES];
+	}	
+	[super viewWillDisappear:animated];
+}
+
 - (void)viewDidUnload
 {
 	[self setMapView:nil];
