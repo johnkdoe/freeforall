@@ -345,7 +345,10 @@
 		[self setBarsHidden:NO animated:animated];
 
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
+	{
 		[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackOpaque;
+		[self.navigationController popViewControllerAnimated:YES];
+	}
 	[super viewWillDisappear:animated];
 }
 
