@@ -8,6 +8,9 @@
 
 #import "ScrollableImageDetailViewController.h"
 
+#import <CoreTelephony/CTCallCenter.h>
+#import <CoreTelephony/CTCall.h>
+
 #import "FlipsideViewController.h"
 
 #import "UISplitViewController+MasterDetailUtilities.h"
@@ -17,9 +20,13 @@
 
 @interface ScrollableImageDetailViewController ()
 	<UIPopoverControllerDelegate, FlipsideViewControllerDelegate>
+
 @property (strong, nonatomic) IBOutlet UITapGestureRecognizer *singleTapGesture;
 @property (strong, nonatomic) IBOutlet UITapGestureRecognizer *doubleTapGesture;
 @property (strong, nonatomic) IBOutlet UITapGestureRecognizer *tripleTapGesture;
+@property (strong, nonatomic) IBOutlet UITapGestureRecognizer *fourTapGesture;
+@property (strong, nonatomic) IBOutlet UILongPressGestureRecognizer *tap1ThenHoldGesture;
+@property (strong, nonatomic) IBOutlet UILongPressGestureRecognizer *tap2ThenHoldGesture;
 @property (weak, nonatomic) IBOutlet UIScrollView* scrollView;
 @property (weak, nonatomic) IBOutlet UIImageView *blindsImageView;
 @property (weak, nonatomic) UIImageView* nestedImageView;
@@ -28,9 +35,12 @@
 @property (strong, nonatomic) UIPopoverController *flipsidePopoverController;
 
 @property BOOL barsHidden;
+@property BOOL ignoreExceptionallyUglyStatusBarWillChangeNotificationKludgeHackWorkaround;
 @property (readonly) CGSize recommendedZoomScales;
 
 @property (strong, nonatomic) xolawareReachability* internetReachability;
+
+@property (strong, nonatomic) IBOutlet UILongPressGestureRecognizer *tripleTap3FingerThenHoldGesture;
 
 @end
 
@@ -44,6 +54,9 @@
 @synthesize singleTapGesture = _singleTapGesture;
 @synthesize doubleTapGesture = _doubleTapGesture;
 @synthesize tripleTapGesture = _tripleTapGesture;
+@synthesize fourTapGesture = _fourTapGesture;
+@synthesize tap1ThenHoldGesture = _tapThenHoldGesture;
+@synthesize tap2ThenHoldGesture = _tap2ThenHoldGesture;
 
 @synthesize flipsidePopoverController = _flipsidePopoverController;
 
@@ -53,6 +66,10 @@
 @synthesize networkUnavailableLabel = _networkUnavailableLabel;
 
 @synthesize internetReachability = _internetReachability;
+
+@synthesize tripleTap3FingerThenHoldGesture = _tripleTap3FingerThenHoldGesture;
+
+@synthesize ignoreExceptionallyUglyStatusBarWillChangeNotificationKludgeHackWorkaround = _ignoreExceptionallyUglyStatusBarWillChangeNotificationKludgeHackWorkaround;
 
 - (void)setImage:(UIImage*)uiImage
 {
@@ -89,6 +106,11 @@
 	return CGSizeMake(widthScale, heightScale);
 }
 
+- (CGFloat)recommendedZoomScale {
+	CGSize recommendedZoom = self.recommendedZoomScales;
+	return MAX(recommendedZoom.width, recommendedZoom.height);
+}
+
 #pragma mark - ScrollableImageDetailViewController public implementation
 
 - (void)resetSplitViewBarButtonTitle
@@ -102,6 +124,32 @@
 }
 
 #pragma mark - ScrollableImageDetailViewController private implementation
+
+- (void)callDidChange:(NSNotification*)notification {
+	assert(notification.name == @"CTCallStateDidChange");
+#if DEBUG
+	NSDictionary* userInfo = notification.userInfo;
+	NSLog(@"CTCallStateDidChange userInfo %@", userInfo);
+	CTCall* call = [userInfo objectForKey:@"opaqueCallObject"];
+	NSLog(@"CTCall id = %@, state = %@", call.callID, call.callState);
+#endif
+	if (!self.barsHidden)
+		return;
+
+	UIApplication* uiApp = [UIApplication sharedApplication];
+	CTCallCenter* callCenter = notification.object;
+	BOOL animate = (BOOL)self.view.window;
+	if (uiApp.isStatusBarHidden && callCenter.currentCalls)
+	{
+		NSLog(@"calls all calls done");
+		[uiApp setStatusBarHidden:NO withAnimation:[self statusBarAnimation:animate]];
+	}
+	else if (!uiApp.isStatusBarHidden && !callCenter.currentCalls)
+	{
+		NSLog(@"calls exist");
+		[uiApp setStatusBarHidden:YES withAnimation:[self statusBarAnimation:animate]];
+	}
+}
 
 - (void)debugLog:(NSString*)caller
 {
@@ -118,12 +166,18 @@
 //		  );
 }
 
-- (CGRect)visibleBlindsRect
+- (void)hideBlinds
 {
-	CGFloat y = 0, h = self.view.frame.size.height;
-	if (!self.barsHidden)
-		h -= y = self.navigationController.navigationBar.frame.size.height;
-	return CGRectMake(0, y, self.blindsImageView.frame.size.width, h);
+	CGFloat y = self.barsHidden ? 0 : self.navigationController.navigationBar.frame.size.height;
+	CGRect hiddenBlindsRect = CGRectMake(0, y, self.blindsImageView.frame.size.width, 0);
+	
+	[UIView animateWithDuration:0.666 delay:0.1 options:UIViewAnimationCurveEaseInOut
+					 animations:^{ self.blindsImageView.frame = hiddenBlindsRect; }
+					 completion:^(BOOL finished) {
+						 [NSThread sleepForTimeInterval:0.777];
+						 self.blindsImageView.hidden = YES;
+					 }
+	 ];
 }
 
 - (void)nestImageInScrollView
@@ -175,8 +229,7 @@
 				[self.scrollView addSubview:[[UIImageView alloc] initWithImage:self.image]];
 				_nestedImageView = self.scrollView.subviews.lastObject;
 				
-				CGSize recommendedZoom = self.recommendedZoomScales;
-				self.scrollView.zoomScale = MAX(recommendedZoom.width, recommendedZoom.height);
+				self.scrollView.zoomScale = self.recommendedZoomScale;
 				
 				// must come after setZoomScale
 				self.scrollView.contentOffset = CGPointZero;
@@ -201,22 +254,49 @@
 					 completion:nestImageInScrollView];
 }
 
+- (void)reachabilityChanged:(NSNotification*)note
+{
+#if DEBUG
+	xolawareReachability* curReach = [note object];
+	NSParameterAssert([curReach isKindOfClass:[xolawareReachability class]]);
+#endif
+	
+	// setImage: -> nestImageInScrollView => stops notifier + hides networkUnavailableIndicator
+	self.image = nil;
+}
+
+- (CGRect)rectForStatusBarFrame:(CGRect)f {
+	return [self.view convertRect:[self.view.window convertRect:f fromWindow:nil] fromView:nil];
+}
+
 - (void)setBarsHidden:(BOOL)hidden animated:(BOOL)animated
 {
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
 	{
-		// status bar first, because otherwise the navigation bar is in the wrong place
-		[[UIApplication sharedApplication] setStatusBarHidden:hidden
-												withAnimation:UIStatusBarAnimationSlide];
-
 		id parent = self.navigationController.parentViewController;
 		if ([parent respondsToSelector:@selector(isTabBarHidden)]
 			&& hidden != [parent isTabBarHidden]
 			&& [parent respondsToSelector:@selector(setTabBarHidden:animated:)])
 			[parent setTabBarHidden:hidden animated:animated];
-		UIStatusBarAnimation animation
-		  = animated ? UIStatusBarAnimationSlide : UIStatusBarAnimationNone;
-		[[UIApplication sharedApplication] setStatusBarHidden:hidden withAnimation:animation];
+
+		// status bar first, because otherwise the navigation bar is in the wrong place
+		UIApplication* app = [UIApplication sharedApplication];
+		UIInterfaceOrientation originalOrientation = app.statusBarOrientation;
+		BOOL performAnimation;
+		if (UIInterfaceOrientationIsLandscape(originalOrientation))
+		{
+			_ignoreExceptionallyUglyStatusBarWillChangeNotificationKludgeHackWorkaround = YES;
+			[app setStatusBarOrientation:UIInterfaceOrientationPortrait animated:NO];
+			CGRect portraitFrame = app.statusBarFrame;
+			[app setStatusBarOrientation:originalOrientation animated:NO];
+			_ignoreExceptionallyUglyStatusBarWillChangeNotificationKludgeHackWorkaround = NO;
+			performAnimation = (40 != portraitFrame.size.height);
+		}
+		else
+			performAnimation = (40 != app.statusBarFrame.size.height);
+
+		if (performAnimation)
+			[app setStatusBarHidden:hidden withAnimation:[self statusBarAnimation:animated]];
 	}
 	[self.navigationController setNavigationBarHidden:hidden animated:animated];
 	
@@ -263,40 +343,87 @@
 //	}
 }
 
-- (void)reachabilityChanged:(NSNotification*)note
-{
-#if DEBUG
-	xolawareReachability* curReach = [note object];
-	NSParameterAssert([curReach isKindOfClass:[xolawareReachability class]]);
-#endif
-
-	// setImage: -> nestImageInScrollView => stops notifier + hides networkUnavailableIndicator
-	self.image = nil;
-}
-
 /*
 - (void)showBlinds
 {
 	self.blindsImageView.hidden = NO;
 	CGRect visibleBlindsRect = [self visibleBlindsRect];
 	[UIView animateWithDuration:0.2 delay:0.0 options:UIViewAnimationCurveEaseOut
-					 animations:^{ self.blindsImageView.frame = visibleBlindsRect; }
-					 completion:^(BOOL finished) { [self hideBlinds]; } ];
+	animations:^{ self.blindsImageView.frame = visibleBlindsRect; }
+	completion:^(BOOL finished) { [self hideBlinds]; } ];
 }
 */
 
-- (void)hideBlinds
-{
-	CGFloat y = self.barsHidden ? 0 : self.navigationController.navigationBar.frame.size.height;
-	CGRect hiddenBlindsRect = CGRectMake(0, y, self.blindsImageView.frame.size.width, 0);
+- (UIStatusBarAnimation)statusBarAnimation:(BOOL)animated {
+	return animated ? UIStatusBarAnimationSlide : UIStatusBarAnimationNone;
+}
 
-	[UIView animateWithDuration:0.666 delay:0.1 options:UIViewAnimationCurveEaseInOut
-					 animations:^{ self.blindsImageView.frame = hiddenBlindsRect; }
-					 completion:^(BOOL finished) {
-						 [NSThread sleepForTimeInterval:0.777];
-						 self.blindsImageView.hidden = YES;
-					 }
-	 ];
+//- (void)statusBarWillChangeOrientation:(NSNotification*)notification {
+//	assert(notification.name == UIApplicationWillChangeStatusBarOrientationNotification);
+//	UIApplication* app = notification.object;
+//	if (self.barsHidden && UIInterfaceOrientationIsPortrait(app.statusBarOrientation)
+//		&& (40 == app.statusBarFrame.size.height))
+//	{
+//		NSNumber* userInfoNewOrientation
+//		  = [notification.userInfo objectForKey:UIApplicationStatusBarOrientationUserInfoKey];
+//		UIInterfaceOrientation newOrientation = [userInfoNewOrientation unsignedIntValue];
+//		if (UIInterfaceOrientationIsLandscape(newOrientation))
+//		{
+//			BOOL nowHideStatusBar = ;
+//			UIStatusBarAnimation animation
+//			  = self.view.window ? UIStatusBarAnimationSlide : UIStatusBarAnimationNone;
+//			[notification.object setStatusBarHidden:nowHideStatusBar withAnimation:animation];
+//		}
+//	}
+//}
+
+- (void)statusBarWillChangeFrame:(NSNotification*)notification {
+	if (_ignoreExceptionallyUglyStatusBarWillChangeNotificationKludgeHackWorkaround)	return;
+
+	assert(notification.name == UIApplicationWillChangeStatusBarFrameNotification);
+	if (self.barsHidden)
+	{
+		NSValue* userInfoCGRect
+		  = [notification.userInfo objectForKey:UIApplicationStatusBarFrameUserInfoKey];
+		CGRect properAppStatusBarFrame, appStatusBarFrame = [notification.object statusBarFrame];
+		CGRect properNewStatusBarFrame, newStatusBarFrame = [userInfoCGRect CGRectValue];
+		BOOL orientationChange = NO;
+		if (UIInterfaceOrientationIsLandscape([[notification object] statusBarOrientation]))
+			properAppStatusBarFrame = [self rectForStatusBarFrame:appStatusBarFrame];
+		else
+			properAppStatusBarFrame = appStatusBarFrame;
+		if (newStatusBarFrame.size.width == properAppStatusBarFrame.size.width)
+		{
+			properNewStatusBarFrame = newStatusBarFrame;
+		}
+		else
+		{
+			properNewStatusBarFrame = [self rectForStatusBarFrame:newStatusBarFrame];
+			orientationChange
+			  = properNewStatusBarFrame.size.width != properAppStatusBarFrame.size.width;
+		}
+
+		if (!orientationChange)	// i.e. not an orientation change
+		{
+			BOOL hidden = properNewStatusBarFrame.size.height <= 20;
+			UIStatusBarAnimation sbAnimation = [self statusBarAnimation:(BOOL)self.view.window];
+			[notification.object setStatusBarHidden:hidden withAnimation:sbAnimation];
+		}
+	}
+#if DEBUG
+	else 
+	{
+		NSLog(@"statusBarWillChange notification, but bars not hidden, so don't care");
+	}
+#endif
+}
+
+- (CGRect)visibleBlindsRect
+{
+	CGFloat y = 0, h = self.view.frame.size.height;
+	if (!self.barsHidden)
+		h -= y = self.navigationController.navigationBar.frame.size.height;
+	return CGRectMake(0, y, self.blindsImageView.frame.size.width, h);
 }
 
 #pragma mark - UIViewController life cycle overrides
@@ -327,13 +454,34 @@
 											   object:nil];
 }
 
+- (void)viewWillAppear:(BOOL)animated
+{
+	[super viewWillAppear:animated];
+	if (UIUserInterfaceIdiomPhone == [[UIDevice currentDevice] userInterfaceIdiom])
+	{
+		NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+		[notificationCenter addObserver:self
+							   selector:@selector(statusBarWillChangeFrame:)
+								   name:UIApplicationWillChangeStatusBarFrameNotification
+								 object:nil];
+		[notificationCenter addObserver:self
+							   selector:@selector(callDidChange:)
+								   name:@"CTCallStateDidChange"
+								 object:nil];
+	}
+}
+
 - (void)viewDidAppear:(BOOL)animated
 {
 	[super viewDidAppear:animated];
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
 		[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackTranslucent;
+	[self.tripleTapGesture requireGestureRecognizerToFail:self.fourTapGesture];
 	[self.doubleTapGesture requireGestureRecognizerToFail:self.tripleTapGesture];
 	[self.singleTapGesture requireGestureRecognizerToFail:self.doubleTapGesture];
+
+	[self.doubleTapGesture requireGestureRecognizerToFail:self.tap2ThenHoldGesture];
+	[self.singleTapGesture requireGestureRecognizerToFail:self.tap1ThenHoldGesture];
 
 	if (self.blindsImageView && !self.blindsImageView.hidden && self.nestedImageView && self.image)
 		[self hideBlinds];
@@ -348,6 +496,10 @@
 	{
 		[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackOpaque;
 		[self.navigationController popViewControllerAnimated:YES];
+		[[NSNotificationCenter defaultCenter]
+							removeObserver:self
+									  name:UIApplicationWillChangeStatusBarFrameNotification
+									object:nil];
 	}
 	[super viewWillDisappear:animated];
 }
@@ -369,12 +521,16 @@
 
 	self.internetReachability = nil;
 	self.nestedImageView = nil;
-	[self setScrollView:nil];		// automatically inserted by Xcode
-	[self setDoubleTapGesture:nil];	// automatically inserted by Xcode
-	[self setTripleTapGesture:nil];	// automatically inserted by Xcode
-	[self setSingleTapGesture:nil];	// automatically isnerted by Xcode
-	[self setBlindsImageView:nil];	// automatically inserted by Xcode
-	[self setNetworkUnavailableLabel:nil];
+	[self setScrollView:nil];						// automatically inserted by Xcode
+	[self setDoubleTapGesture:nil];					// automatically inserted by Xcode
+	[self setTripleTapGesture:nil];					// automatically inserted by Xcode
+	[self setSingleTapGesture:nil];					// automatically isnerted by Xcode
+	[self setBlindsImageView:nil];					// automatically inserted by Xcode
+	[self setNetworkUnavailableLabel:nil];			// automatically inserted by Xcode
+	[self setTripleTap3FingerThenHoldGesture:nil];	// automatically inserted by Xcode
+	[self setTap1ThenHoldGesture:nil];				// automatically inserted by Xcode
+	[self setFourTapGesture:nil];					// automatically inserted by Xcode
+	[self setTap2ThenHoldGesture:nil];
     [super viewDidUnload];
     // Release any retained subviews of the main view.
 }
@@ -390,6 +546,8 @@
 	// need all these values for zooming as done after the orientation
 	float zoomScale = self.scrollView.zoomScale;
 	float oldMinZoom = self.scrollView.minimumZoomScale;
+
+	[self recommendedZoomScales];
 
 	if (zoomScale == oldMinZoom || zoomScale < self.scrollView.minimumZoomScale)
 		[self.scrollView setZoomScale:self.scrollView.minimumZoomScale animated:YES];
@@ -451,7 +609,6 @@
 		{
 			if (self.scrollView.zoomScale == previousRecommendedZoom.height)
 				[self.scrollView setZoomScale:recommendedZoom.height animated:YES];
-			
 		}
 	}
 }
@@ -473,6 +630,46 @@
 		[self.scrollView setZoomScale:1 animated:YES];
 		[self.scrollView setNeedsDisplay];
 	}	
+}
+
+- (IBAction)ignoreMoreThan3Taps:(id)sender {}
+
+- (IBAction)tap1ThenHold:(UILongPressGestureRecognizer*)gesture
+{
+	if (self.image && gesture.state == UIGestureRecognizerStateBegan)
+	{
+		[self.scrollView setZoomScale:self.recommendedZoomScale animated:YES];
+		[self.scrollView setNeedsDisplay];
+	}	
+}
+
+- (IBAction)tap2ThenHold:(UILongPressGestureRecognizer*)gesture
+{
+	if (self.image && gesture.state == UIGestureRecognizerStateBegan)
+	{
+		[self.scrollView setZoomScale:self.scrollView.maximumZoomScale animated:YES];
+		[self.scrollView setNeedsDisplay];
+	}	
+}
+
+- (IBAction)tripleTap3FingerThenHold:(UILongPressGestureRecognizer *)sender
+{
+#if DEBUG
+	UIApplication* app = [UIApplication sharedApplication];
+	CGRect appStatusBarFrame = app.statusBarFrame;
+	if (UIInterfaceOrientationIsPortrait(app.statusBarOrientation))
+		appStatusBarFrame.size.height = 40;
+	else
+		appStatusBarFrame.size.width = 20;
+	NSValue* statusBarFrameRect = [NSValue valueWithCGRect:appStatusBarFrame];
+	NSDictionary* userInfo
+	  = [NSDictionary dictionaryWithObject:statusBarFrameRect
+									forKey:UIApplicationStatusBarFrameUserInfoKey];
+	NSNotificationCenter* notifyCenter = [NSNotificationCenter defaultCenter];
+	[notifyCenter postNotificationName:UIApplicationWillChangeStatusBarFrameNotification
+								object:app
+							  userInfo:userInfo];
+#endif
 }
 
 #pragma mark - FlipsideViewControllerDelegate implementation
@@ -518,7 +715,7 @@
 //	[self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
 	[self resetSplitViewBarButtonTitle];
 }
-
+/*
 - (void)splitViewController:(UISplitViewController*)splitController
 	 willShowViewController:(UIViewController*)viewController
   invalidatingBarButtonItem:(UIBarButtonItem *)barButtonItem
@@ -529,6 +726,7 @@
     // Called when the view is shown again in the split view, invalidating the button and popover controller.
 //	[self.navigationItem setLeftBarButtonItem:nil animated:YES];
 }
+*/
 
 - (NSString*)kludgeWorkaroundMasterViewButtonStartupTitle {
 	return NSLocalizedString(@"top places", "");
