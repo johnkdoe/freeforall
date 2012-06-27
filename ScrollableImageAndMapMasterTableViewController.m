@@ -52,19 +52,23 @@
 - (void)setObjects:(NSArray*)newObjects
 {
 	int delta;
-	if (_objects && newObjects && 0 < (delta = newObjects.count - _objects.count))
+	NSUInteger newCount = newObjects.count;
+	if (_objects && newObjects && 0 < (delta = newCount - _objects.count))
 	{
 		NSArray* newObjectsHead = [newObjects subarrayWithRange:NSMakeRange(0, _objects.count)];
 		if ([newObjectsHead isEqualToArray:_objects])
 		{
+			// update tableView
 			NSMutableArray* newIndexPaths = [NSMutableArray arrayWithCapacity:delta];
-			for (int i = _objects.count; i < newObjects.count ; ++i)
+			for (int i = _objects.count; i < newCount ; ++i)
 				[newIndexPaths addObject:[NSIndexPath indexPathForRow:i inSection:0]];
+
 			[self.tableView beginUpdates];
 			_objects = newObjects;
 			[self.tableView insertRowsAtIndexPaths:newIndexPaths
 								  withRowAnimation:UITableViewRowAnimationBottom];
 			[self.tableView endUpdates];
+
 			return;
 		}
 	}
