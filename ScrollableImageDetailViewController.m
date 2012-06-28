@@ -31,6 +31,8 @@
 @property (weak, nonatomic) UIImageView* nestedImageView;
 @property (weak, nonatomic) IBOutlet UILabel *networkUnavailableLabel;
 
+@property (readonly, nonatomic) NSString* titleForNoImage;
+
 @property (strong, nonatomic) UIPopoverController *flipsidePopoverController;
 
 @property BOOL barsHidden;
@@ -64,6 +66,8 @@
 @synthesize nestedImageView = _nestedImageView;
 @synthesize networkUnavailableLabel = _networkUnavailableLabel;
 
+@synthesize titleForNoImage = _titleForNoImage;
+
 @synthesize internetReachability = _internetReachability;
 
 @synthesize tripleTap3FingerThenHoldGesture = _tripleTap3FingerThenHoldGesture;
@@ -76,7 +80,7 @@
 		[self setBarsHidden:NO animated:NO];
 	_image = uiImage;
 	if (!_image)
-		self.imageTitle = NSLocalizedString(self.title, "fallback default");
+		self.title = self.titleForNoImage;
 	if (self.scrollView)			// this method can be invoked before viewDidLoad on iPhone
 		[self nestImageInScrollView];
 }
@@ -120,7 +124,8 @@
 }
 
 - (void)setImageTitle:(NSString*)imageTitle {
-	self.navigationItem.title = imageTitle;
+	// setting self.navigationItem.title here causes self.title to change!
+	self.title = imageTitle;
 }
 
 #pragma mark - ScrollableImageDetailViewController private implementation
@@ -473,12 +478,6 @@ typedef void (^completionBlock)(BOOL);
 			[notification.object setStatusBarHidden:hidden withAnimation:sbAnimation];
 		}
 	}
-#if DEBUG
-	else 
-	{
-		NSLog(@"statusBarWillChange notification, but bars not hidden, so don't care");
-	}
-#endif
 }
 
 - (CGRect)visibleBlindsRect
@@ -494,7 +493,7 @@ typedef void (^completionBlock)(BOOL);
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	self.title = NSLocalizedString(self.title, nil);
+	_titleForNoImage = self.title = NSLocalizedString(self.title, nil);
 	self.scrollView.delegate = self;
 	if (self.image)						// in iPhone segue, image will get set before load
 		[self nestImageInScrollView];
@@ -511,7 +510,6 @@ typedef void (^completionBlock)(BOOL);
 		[self.navigationController.navigationBar
 		 setTitleVerticalPositionAdjustment:-2.0 forBarMetrics:UIBarMetricsLandscapePhone];
 	}
-	
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -638,7 +636,7 @@ typedef void (^completionBlock)(BOOL);
 			self.flipsidePopoverController = [(id)segue popoverController];
 			self.flipsidePopoverController.delegate = self;
 		}
-		if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+		if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad)
 			self.navigationItem.rightBarButtonItem.enabled = NO;
 	}
 }
@@ -738,7 +736,7 @@ typedef void (^completionBlock)(BOOL);
     }
 	else
 	{
-		self.navigationItem.rightBarButtonItem.enabled = YES;
+		self.navigationItem.rightBarButtonItem.enabled = YES;	// turn info button back on
         [self.flipsidePopoverController dismissPopoverAnimated:YES];
         self.flipsidePopoverController = nil;
     }
