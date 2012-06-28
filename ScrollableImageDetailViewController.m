@@ -7,8 +7,7 @@
 #include "xolawareOpenSourceCopyright.h"	//  Copyright (c) 2012 xolaware.
 
 #import "ScrollableImageDetailViewController.h"
-
-#import <CoreTelephony/CTCallCenter.h>
+#import "xolawareUIResponderWithCoreTelelphonyHandling.h"
 #import <CoreTelephony/CTCall.h>
 
 #import "FlipsideViewController.h"
@@ -35,7 +34,7 @@
 @property (strong, nonatomic) UIPopoverController *flipsidePopoverController;
 
 @property BOOL barsHidden;
-@property BOOL ignoreExceptionallyUglyStatusBarWillChangeNotificationKludgeHackWorkaround;
+@property BOOL ignoreExceptionallyUglyStatusBarWillChangeFrameNotificationKludgeHackWorkaround;
 @property (readonly) CGSize recommendedZoomScales;
 
 @property (strong, nonatomic) xolawareReachability* internetReachability;
@@ -69,13 +68,15 @@
 
 @synthesize tripleTap3FingerThenHoldGesture = _tripleTap3FingerThenHoldGesture;
 
-@synthesize ignoreExceptionallyUglyStatusBarWillChangeNotificationKludgeHackWorkaround = _ignoreExceptionallyUglyStatusBarWillChangeNotificationKludgeHackWorkaround;
+@synthesize ignoreExceptionallyUglyStatusBarWillChangeFrameNotificationKludgeHackWorkaround = _ignoreExceptionallyUglyStatusBarWillChangeFrameNotificationKludgeHackWorkaround;
 
 - (void)setImage:(UIImage*)uiImage
 {
 	if (self.barsHidden)
 		[self setBarsHidden:NO animated:NO];
 	_image = uiImage;
+	if (!_image)
+		self.imageTitle = NSLocalizedString(self.title, "fallback default");
 	if (self.scrollView)			// this method can be invoked before viewDidLoad on iPhone
 		[self nestImageInScrollView];
 }
@@ -113,38 +114,37 @@
 
 #pragma mark - ScrollableImageDetailViewController public implementation
 
-- (void)resetSplitViewBarButtonTitle
-{
-	UINavigationController* nc = self.splitViewController.selectedTabBarNavigationController;
-	self.navigationItem.leftBarButtonItem.title = nc.topViewController.title;
+- (void)resetSplitViewBarButtonTitle {
+	self.navigationItem.leftBarButtonItem.title
+	  = self.splitViewController.selectedTabBarNavigationController.topViewController.title;
 }
 
 - (void)setImageTitle:(NSString*)imageTitle {
-	self.title = imageTitle;
+	self.navigationItem.title = imageTitle;
 }
 
 #pragma mark - ScrollableImageDetailViewController private implementation
 
 - (void)callDidChange:(NSNotification*)notification {
-	assert(notification.name == @"CTCallStateDidChange");
+	assert(notification.name == xolawareCoreTelephonyCallDidChangeNotification);
 #if DEBUG
 	NSDictionary* userInfo = notification.userInfo;
-	NSLog(@"CTCallStateDidChange userInfo %@", userInfo);
-	CTCall* call = [userInfo objectForKey:@"opaqueCallObject"];
-	NSLog(@"CTCall id = %@, state = %@", call.callID, call.callState);
+	NSLog(@"%@ userInfo %@", xolawareCoreTelephonyCallDidChangeNotification, userInfo);
+	CTCall* call = [userInfo objectForKey:xolawareCoreTelephonyCall];
+	NSLog(@"%@ id = %@, state = %@", xolawareCoreTelephonyCall, call.callID, call.callState);
 #endif
 	if (!self.barsHidden)
 		return;
 
 	UIApplication* uiApp = [UIApplication sharedApplication];
-	CTCallCenter* callCenter = notification.object;
+	xolawareUIResponderWithCoreTelelphonyHandling* xolawareTelephonyHandler = notification.object;
 	BOOL animate = (BOOL)self.view.window;
-	if (uiApp.isStatusBarHidden && callCenter.currentCalls)
+	if (uiApp.isStatusBarHidden && xolawareTelephonyHandler.isInCall)
 	{
 		NSLog(@"calls all calls done");
 		[uiApp setStatusBarHidden:NO withAnimation:[self statusBarAnimation:animate]];
 	}
-	else if (!uiApp.isStatusBarHidden && !callCenter.currentCalls)
+	else if (!uiApp.isStatusBarHidden && !xolawareTelephonyHandler.isInCall)
 	{
 		NSLog(@"calls exist");
 		[uiApp setStatusBarHidden:YES withAnimation:[self statusBarAnimation:animate]];
@@ -166,92 +166,111 @@
 //		  );
 }
 
-- (void)hideBlinds
+- (void)establishGestureDependencies
 {
-	CGFloat y = self.barsHidden ? 0 : self.navigationController.navigationBar.frame.size.height;
-	CGRect hiddenBlindsRect = CGRectMake(0, y, self.blindsImageView.frame.size.width, 0);
+	[self.tripleTapGesture requireGestureRecognizerToFail:self.fourTapGesture];
+	[self.doubleTapGesture requireGestureRecognizerToFail:self.tripleTapGesture];
+	[self.singleTapGesture requireGestureRecognizerToFail:self.doubleTapGesture];
 	
-	[UIView animateWithDuration:0.666 delay:0.1 options:UIViewAnimationCurveEaseInOut
+	[self.doubleTapGesture requireGestureRecognizerToFail:self.tap2ThenHoldGesture];
+	[self.singleTapGesture requireGestureRecognizerToFail:self.tap1ThenHoldGesture];
+}
+
+- (void)hideBlinds:(CGFloat)duration
+{
+	BOOL isPad = UIUserInterfaceIdiomPad == [[UIDevice currentDevice] userInterfaceIdiom];
+	CGFloat delay = isPad ? 0.333 : 0.4;
+	CGRect hiddenBlindsRect = CGRectMake(0, 0, self.blindsImageView.frame.size.width, 0);
+
+	[UIView animateWithDuration:duration+delay delay:delay options:UIViewAnimationCurveEaseInOut
 					 animations:^{ self.blindsImageView.frame = hiddenBlindsRect; }
 					 completion:^(BOOL finished) {
-						 [NSThread sleepForTimeInterval:0.777];
+						 [NSThread sleepForTimeInterval:duration+0.11];
 						 self.blindsImageView.hidden = YES;
 					 }
 	 ];
 }
 
-- (void)nestImageInScrollView
-{
-	typedef void (^animationBlock)(void);
-	animationBlock showBlinds;
+typedef void (^completionBlock)(BOOL);
 
-	NSTimeInterval duration;
-	if (self.blindsImageView.hidden)
+- (void)nestImageInScrollViewButDeleteOldImageFirstIfNecessary
+{
+	if (_nestedImageView && [self.scrollView.subviews containsObject:_nestedImageView])
 	{
-		duration = 0.2;
-		self.blindsImageView.hidden = NO;
-		CGRect visibleBlindsRect = [self visibleBlindsRect];
-		showBlinds = ^{ self.blindsImageView.frame = visibleBlindsRect; };
-//		NSLog(@"bvb={%g,%g,%g,%g},bvf={%g,%g,%g,%g},vbr={%g,%g,%g,%g}",
-//			  self.blindsImageView.bounds.origin.x, self.blindsImageView.bounds.origin.y,
-//			  self.blindsImageView.bounds.size.width, self.blindsImageView.bounds.size.height,
-//			  self.blindsImageView.frame.origin.x, self.blindsImageView.frame.origin.y,
-//			  self.blindsImageView.frame.size.width, self.blindsImageView.frame.size.height,
-//			  visibleBlindsRect.origin.x, visibleBlindsRect.origin.y,
-//			  visibleBlindsRect.size.width, visibleBlindsRect.size.height
-//			  );
+		self.scrollView.zoomScale = 1;
+		if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
+			[self nestImageInScrollViewFadeInNewImage];
+		else
+			[UIView animateWithDuration:0.075 delay:0
+								options:UIViewAnimationOptionTransitionCrossDissolve
+							 animations:^{ _nestedImageView.alpha = 0; }
+							 completion:^(BOOL oldImageDeleted) {
+								 if (oldImageDeleted)
+									 [_nestedImageView removeFromSuperview];
+								 [self nestImageInScrollViewFadeInNewImage];		
+							 }];
 	}
 	else
+		[self nestImageInScrollViewFadeInNewImage];	
+}
+
+- (void)nestImageInScrollViewFadeInNewImage {
+	if (self.image)
 	{
-		duration = 0;
-		showBlinds = nil;
-//		NSLog(@"self.blindsImageView.hidden == NO");
+		// the image may have come from cache, and so there may be
+		// no network availability, but we'll live with that for now				
+		self.networkUnavailableLabel.hidden = YES;
+		[self.internetReachability stopNotifier];
+		
+		self.scrollView.contentSize = self.image.size;
+		UIImageView* imageView = [[UIImageView alloc] initWithImage:self.image];
+		BOOL isPad = ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad);
+		if (isPad)
+			imageView.alpha = 0;
+		[self.scrollView addSubview:imageView];
+		_nestedImageView = self.scrollView.subviews.lastObject;
+		self.scrollView.zoomScale = self.recommendedZoomScale;
+		
+		// must come after setZoomScale
+		self.scrollView.contentOffset = CGPointZero;
+		if (isPad)
+			[UIView animateWithDuration:0.075 delay:0
+								options:UIViewAnimationOptionTransitionCrossDissolve
+							 animations:^{ _nestedImageView.alpha = 1; }
+							 completion:^(BOOL finished){ [self hideBlinds:0.1]; }];
+		else
+			[self hideBlinds:0.22];
 	}
-
-	typedef void (^completionBlock)(BOOL);
-	completionBlock nestImageInScrollView
-	  = ^(BOOL finished)
+	else	// no image; may be due to no network availability
+	{
+		BOOL netLabelHidden = self.networkUnavailableLabel.hidden;
+		if ([xolawareReachability connectedToNetwork] != netLabelHidden)
 		{
-			if (_nestedImageView && [self.scrollView.subviews containsObject:_nestedImageView])
-			{
-				self.scrollView.zoomScale = 1;
-				[_nestedImageView removeFromSuperview];
-			}
-
-			if (self.image)
-			{
-				// the image may have come from cache, and so there may be
-				// no network availability, but we'll live with that for now				
-				self.networkUnavailableLabel.hidden = YES;
+			if (netLabelHidden)
+				[self.internetReachability startNotifier];
+			else
 				[self.internetReachability stopNotifier];
+			self.networkUnavailableLabel.hidden = !netLabelHidden;
+		}
+	}
+	
+}
 
-				self.scrollView.contentSize = self.image.size;
-				[self.scrollView addSubview:[[UIImageView alloc] initWithImage:self.image]];
-				_nestedImageView = self.scrollView.subviews.lastObject;
-				
-				self.scrollView.zoomScale = self.recommendedZoomScale;
-				
-				// must come after setZoomScale
-				self.scrollView.contentOffset = CGPointZero;
-				[self hideBlinds];	// may only hide them a little if there is no image
-			}
-			else	// no image; may be due to no network availability
-			{
-				BOOL netLabelHidden = self.networkUnavailableLabel.hidden;
-				if ([xolawareReachability connectedToNetwork] != netLabelHidden)
-				{
-					if (netLabelHidden)
-						[self.internetReachability startNotifier];
-					else
-						[self.internetReachability stopNotifier];
-					self.networkUnavailableLabel.hidden = !netLabelHidden;
-				}
-			}
-		};
+- (void)nestImageInScrollView
+{
+	if (self.blindsImageView.hidden)
+	{
+		completionBlock deleteOldImageThenNestNewImageInScrollView
+		  = ^(BOOL finished){ [self nestImageInScrollViewButDeleteOldImageFirstIfNecessary]; };
+		self.blindsImageView.hidden = NO;
+		CGRect visibleBlindsRect = [self visibleBlindsRect];
+		[UIView animateWithDuration:0.22 delay:0.0 options:UIViewAnimationCurveEaseOut
+						 animations:^{ self.blindsImageView.frame = visibleBlindsRect; }
+						 completion:deleteOldImageThenNestNewImageInScrollView];
+	}
+	else
+		[self nestImageInScrollViewButDeleteOldImageFirstIfNecessary];
 
-	[UIView animateWithDuration:duration delay:0.0 options:UIViewAnimationCurveEaseOut
-					 animations:showBlinds
-					 completion:nestImageInScrollView];
 }
 
 - (void)reachabilityChanged:(NSNotification*)note
@@ -260,7 +279,7 @@
 	xolawareReachability* curReach = [note object];
 	NSParameterAssert([curReach isKindOfClass:[xolawareReachability class]]);
 #endif
-	
+
 	// setImage: -> nestImageInScrollView => stops notifier + hides networkUnavailableIndicator
 	self.image = nil;
 }
@@ -269,78 +288,122 @@
 	return [self.view convertRect:[self.view.window convertRect:f fromWindow:nil] fromView:nil];
 }
 
+- (void)removeNotificationObservers {
+	NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+	[notificationCenter removeObserver:self
+								  name:kReachabilityChangedNotification 
+								object:nil];
+	[notificationCenter removeObserver:self
+								  name:xolawareCoreTelephonyCallDidChangeNotification
+								object:nil];
+	[notificationCenter removeObserver:self
+								  name:UIApplicationWillChangeStatusBarFrameNotification
+								object:nil];
+}
+
 - (void)setBarsHidden:(BOOL)hidden animated:(BOOL)animated
 {
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
 	{
-		id parent = self.navigationController.parentViewController;
-		if ([parent respondsToSelector:@selector(isTabBarHidden)]
-			&& hidden != [parent isTabBarHidden]
-			&& [parent respondsToSelector:@selector(setTabBarHidden:animated:)])
-			[parent setTabBarHidden:hidden animated:animated];
+		[self setTabBarHidden:hidden animated:animated];
+        [self setStatusBarHidden:hidden animated:animated];
+	}
+	else 
+	{
+//		[self setSplitViewMasterViewControllerHidden:hidden animated:animated];
+	}
 
-		// status bar first, because otherwise the navigation bar is in the wrong place
-		UIApplication* app = [UIApplication sharedApplication];
-		UIInterfaceOrientation originalOrientation = app.statusBarOrientation;
-		BOOL performAnimation;
-		if (UIInterfaceOrientationIsLandscape(originalOrientation))
+	// must be performed after hiding/showing of statusBar
+	[self.navigationController setNavigationBarHidden:hidden animated:animated];
+
+}
+
+/*
+	the math below all works, but when done, there's a black space in the master area
+ 
+- (void)setSplitViewMasterViewControllerHidden:(BOOL)hidden animated:(BOOL)animated
+{
+	if (self.splitViewController
+		&& UIInterfaceOrientationIsLandscape([[UIDevice currentDevice] orientation]))
+	{
+		UIView* masterView = self.splitViewController.selectedTabBarNavigationController.view;	// 0x07954da0 UILayoutContainerView		  {  0,0; 320 748}
+		UIView* detailView = self.splitViewController.detailUIViewController.view;				// 0x0794a910 UIView					  {  0,0; 703 748}
+		UIView* detailViewViewControllerWrapperView = detailView.superview;						// 0x0794add0 UIViewControllerWrapperView {  0,0; 703 748}
+		UIView* navigationTransitionView = detailViewViewControllerWrapperView.superview;		// 0x079547d0 UINavigationTransitionView  {  0,0; 703 748}
+		UIView* detailViewLayout = navigationTransitionView.superview;							// 0x07978da0 UILayoutContainerView		  {321,0; 703 748}
+
+		UIView* masterViewControllerWrapperView = masterView.superview;
+		UIView* masterTransitionView = masterViewControllerWrapperView.superview;
+		UIView* masterViewLayout = masterTransitionView.superview;
+
+		assert(masterViewLayout.superview == detailViewLayout.superview);
+		for (UIView* view in masterViewLayout.superview.subviews)
+			if (view == masterViewLayout || view == detailViewLayout)
+				continue;
+			else
+				[view removeFromSuperview];
+
+		CGRect masterLayoutFrame = masterView.frame;
+		CGRect detailLayoutFrame = detailViewLayout.frame;
+
+		CGFloat width = masterLayoutFrame.size.width - masterLayoutFrame.origin.x;
+		if (hidden)
 		{
-			_ignoreExceptionallyUglyStatusBarWillChangeNotificationKludgeHackWorkaround = YES;
-			[app setStatusBarOrientation:UIInterfaceOrientationPortrait animated:NO];
-			CGRect portraitFrame = app.statusBarFrame;
-			[app setStatusBarOrientation:originalOrientation animated:NO];
-			_ignoreExceptionallyUglyStatusBarWillChangeNotificationKludgeHackWorkaround = NO;
-			performAnimation = (40 != portraitFrame.size.height);
+			masterLayoutFrame.origin.x = -width;
+			detailLayoutFrame.size.width += detailLayoutFrame.origin.x;
+			detailLayoutFrame.origin.x = 0;
 		}
 		else
-			performAnimation = (40 != app.statusBarFrame.size.height);
-
-		if (performAnimation)
-			[app setStatusBarHidden:hidden withAnimation:[self statusBarAnimation:animated]];
+		{
+			detailLayoutFrame.size.width -= width;
+			masterLayoutFrame.origin.x = 0;
+			detailLayoutFrame.origin.x = width + 1;
+		}
+		CGRect innerFrame
+		  = CGRectMake(0, 0, detailLayoutFrame.size.width, detailLayoutFrame.size.height);
+		[UIView animateWithDuration:animated ? 0.3 : 0
+						 animations:^{
+							 masterTransitionView.superview.frame = masterLayoutFrame;
+							 masterTransitionView.superview.hidden = hidden;
+							 navigationTransitionView.superview.frame = detailLayoutFrame;
+							 detailViewViewControllerWrapperView.superview.frame = innerFrame;
+							 detailView.superview.frame = innerFrame;
+							 detailView.frame = innerFrame;
+						 }
+		 ];
 	}
-	[self.navigationController setNavigationBarHidden:hidden animated:animated];
-	
-//	else if ([parent isKindOfClass:[UISplitViewController class]]
-//			 && UIInterfaceOrientationIsLandscape([[UIDevice currentDevice] orientation]))
-//	{
-//		UIView* masterView = self.masterViewController.view;						// 0x07954da0 UILayoutContainerView		  {  0,0; 320 748}
-//
-//		UIView* detailView = self.detailViewController.view;						// 0x0794a910 UIView					  {  0,0; 703 748}
-//		UIView* viewControllerWrapperView = detailView.superview;					// 0x0794add0 UIViewControllerWrapperView {  0,0; 703 748}
-//		UIView* navigationTransitionView = viewControllerWrapperView.superview;		// 0x079547d0 UINavigationTransitionView  {  0,0; 703 748}
-//		UIView* detailViewLayout = navigationTransitionView.superview;				// 0x07978da0 UILayoutContainerView		  {321,0; 703 748}
-//
-//		assert(masterView.superview == detailViewLayout.superview);
-//
-//		CGRect masterViewFrame = masterView.frame;
-//		CGRect detailLayoutFrame = detailViewLayout.frame;
-//
-//		CGFloat width = masterViewFrame.size.width - masterViewFrame.origin.x;
-//		if (hidden)
-//		{
-//			masterViewFrame.origin.x = -width;
-//			detailLayoutFrame.size.width += detailLayoutFrame.origin.x;
-//			detailLayoutFrame.origin.x = 0;
-//		}
-//		else
-//		{
-//			detailLayoutFrame.size.width -= width;
-//			masterViewFrame.origin.x = 0;
-//			detailLayoutFrame.origin.x = width + 1;
-//		}
-//		CGRect innerFrame
-//		  = CGRectMake(0, 0, detailLayoutFrame.size.width, detailLayoutFrame.size.height);
-//		[UIView animateWithDuration:0.3 
-//						 animations:^{
-//							 self.masterViewController.view.frame = masterViewFrame;
-//							 detailViewLayout.frame = detailLayoutFrame;
-//							 navigationTransitionView.frame = innerFrame;
-//							 viewControllerWrapperView.frame = innerFrame;
-//							 self.detailViewController.view.frame = innerFrame;
-//							 [self.masterViewController.view setHidden:hidden];
-//						 }
-//		 ];
-//	}
+}*/
+
+- (void)setStatusBarHidden:(BOOL)hidden animated:(BOOL)animated
+{
+    // status bar first, because otherwise the navigation bar is in the wrong place
+    UIApplication* app = [UIApplication sharedApplication];
+    UIInterfaceOrientation originalOrientation = app.statusBarOrientation;
+    BOOL performStatusBarAnimation;
+    if (UIInterfaceOrientationIsLandscape(originalOrientation))
+    {
+        _ignoreExceptionallyUglyStatusBarWillChangeFrameNotificationKludgeHackWorkaround = YES;
+        [app setStatusBarOrientation:UIInterfaceOrientationPortrait animated:NO];
+        CGRect portraitFrame = app.statusBarFrame;
+        [app setStatusBarOrientation:originalOrientation animated:NO];
+        _ignoreExceptionallyUglyStatusBarWillChangeFrameNotificationKludgeHackWorkaround = NO;
+
+        performStatusBarAnimation = (40 != portraitFrame.size.height);
+    }
+    else
+        performStatusBarAnimation = (40 != app.statusBarFrame.size.height);
+    
+    if (performStatusBarAnimation)
+        [app setStatusBarHidden:hidden withAnimation:[self statusBarAnimation:animated]];
+}
+
+- (void)setTabBarHidden:(BOOL)hidden animated:(BOOL)animated
+{
+    id parent = self.navigationController.parentViewController;
+    if ([parent respondsToSelector:@selector(isTabBarHidden)]
+        && hidden != [parent isTabBarHidden]
+        && [parent respondsToSelector:@selector(setTabBarHidden:animated:)])
+        [parent setTabBarHidden:hidden animated:animated];
 }
 
 /*
@@ -378,7 +441,7 @@
 //}
 
 - (void)statusBarWillChangeFrame:(NSNotification*)notification {
-	if (_ignoreExceptionallyUglyStatusBarWillChangeNotificationKludgeHackWorkaround)	return;
+	if (_ignoreExceptionallyUglyStatusBarWillChangeFrameNotificationKludgeHackWorkaround)return;
 
 	assert(notification.name == UIApplicationWillChangeStatusBarFrameNotification);
 	if (self.barsHidden)
@@ -421,8 +484,8 @@
 - (CGRect)visibleBlindsRect
 {
 	CGFloat y = 0, h = self.view.frame.size.height;
-	if (!self.barsHidden)
-		h -= y = self.navigationController.navigationBar.frame.size.height;
+//	if (!self.barsHidden)
+//		h -= y = self.navigationController.navigationBar.frame.size.height;
 	return CGRectMake(0, y, self.blindsImageView.frame.size.width, h);
 }
 
@@ -435,6 +498,7 @@
 	self.scrollView.delegate = self;
 	if (self.image)						// in iPhone segue, image will get set before load
 		[self nestImageInScrollView];
+	[self establishGestureDependencies];
 
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad)
 	{
@@ -448,27 +512,6 @@
 			setTitleVerticalPositionAdjustment:-2.0 forBarMetrics:UIBarMetricsLandscapePhone];
 	}
 
-	[[NSNotificationCenter defaultCenter] addObserver:self
-											 selector:@selector(reachabilityChanged:)
-												 name:kReachabilityChangedNotification
-											   object:nil];
-}
-
-- (void)viewWillAppear:(BOOL)animated
-{
-	[super viewWillAppear:animated];
-	if (UIUserInterfaceIdiomPhone == [[UIDevice currentDevice] userInterfaceIdiom])
-	{
-		NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
-		[notificationCenter addObserver:self
-							   selector:@selector(statusBarWillChangeFrame:)
-								   name:UIApplicationWillChangeStatusBarFrameNotification
-								 object:nil];
-		[notificationCenter addObserver:self
-							   selector:@selector(callDidChange:)
-								   name:@"CTCallStateDidChange"
-								 object:nil];
-	}
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -476,15 +519,23 @@
 	[super viewDidAppear:animated];
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
 		[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackTranslucent;
-	[self.tripleTapGesture requireGestureRecognizerToFail:self.fourTapGesture];
-	[self.doubleTapGesture requireGestureRecognizerToFail:self.tripleTapGesture];
-	[self.singleTapGesture requireGestureRecognizerToFail:self.doubleTapGesture];
+	
+	if (UIUserInterfaceIdiomPhone == [[UIDevice currentDevice] userInterfaceIdiom])
+	{
+		NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+		[notificationCenter addObserver:self selector:@selector(statusBarWillChangeFrame:)
+								   name:UIApplicationWillChangeStatusBarFrameNotification
+								 object:nil];
+		[notificationCenter addObserver:self selector:@selector(callDidChange:)
+								   name:xolawareCoreTelephonyCallDidChangeNotification
+								 object:nil];
+		[notificationCenter addObserver:self selector:@selector(reachabilityChanged:)
+								   name:kReachabilityChangedNotification
+								 object:nil];
+	}
 
-	[self.doubleTapGesture requireGestureRecognizerToFail:self.tap2ThenHoldGesture];
-	[self.singleTapGesture requireGestureRecognizerToFail:self.tap1ThenHoldGesture];
-
-	if (self.blindsImageView && !self.blindsImageView.hidden && self.nestedImageView && self.image)
-		[self hideBlinds];
+	if (self.blindsImageView && !self.blindsImageView.hidden && _nestedImageView && self.image)
+		[self hideBlinds:0.4444];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -495,13 +546,18 @@
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
 	{
 		[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackOpaque;
-		[self.navigationController popViewControllerAnimated:YES];
-		[[NSNotificationCenter defaultCenter]
-							removeObserver:self
-									  name:UIApplicationWillChangeStatusBarFrameNotification
-									object:nil];
+		[self removeNotificationObservers];
 	}
 	[super viewWillDisappear:animated];
+}
+
+- (void)viewDidDisappear:(BOOL)animated
+{
+	// i.e. we stepped away from this tab, and not via the back button
+	if (self.navigationController != self.tabBarController.selectedViewController)
+		[self.navigationController popViewControllerAnimated:YES];
+
+	[super viewDidDisappear:animated];
 }
 
 - (void)viewWillUnload
@@ -541,7 +597,7 @@
 // (specifically, the blinds image is too long to start when rotating to portrait
 // and too short to start when rotating to landscape)
 //	if (self.nestedImageView)
-//		[self hideBlinds];
+//		[self hideBlinds:0.2];
 
 	// need all these values for zooming as done after the orientation
 	float zoomScale = self.scrollView.zoomScale;
@@ -676,9 +732,12 @@
 
 - (void)flipsideViewControllerDidFinish:(FlipsideViewController*)controller
 {
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
+    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) 
+	{
         [self dismissModalViewControllerAnimated:YES];
-    } else {
+    }
+	else
+	{
 		self.navigationItem.rightBarButtonItem.enabled = YES;
         [self.flipsidePopoverController dismissPopoverAnimated:YES];
         self.flipsidePopoverController = nil;
