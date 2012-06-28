@@ -74,7 +74,8 @@
 	}
 
 	_objects = newObjects;
-	[self.tableView reloadData];
+	if (!self.isEditing)
+		[self.tableView reloadData];
 }
 
 #pragma mark - public implementation
@@ -173,7 +174,6 @@
 			[self annotateMap:mapVC forRowAtIndexPath:indexPath];
 			
 			self.mapPopover = [[UIPopoverController alloc] initWithContentViewController:mapVC];
-			[self.mapPopover setPopoverContentSize:CGSizeMake(700, 700)];
 			[self.mapPopover presentPopoverFromRect:[tableView rectForRowAtIndexPath:indexPath]
 											 inView:tableView
 						   permittedArrowDirections:UIPopoverArrowDirectionLeft 
