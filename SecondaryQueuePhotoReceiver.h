@@ -3,8 +3,8 @@
 //  voyeur
 //
 //  Created by me on 2012.06.24.
-//  Copyright (c) 2012 xolaware. All rights reserved.
-//
+
+#include "xolawareOpenSourceCopyright.h"	//  Copyright (c) 2012 xolaware.
 
 #import <Foundation/Foundation.h>
 
