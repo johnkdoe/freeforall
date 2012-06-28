@@ -10,7 +10,6 @@
 
 @interface UISplitViewController (MasterDetailUtilities)
 - (UIViewController*)masterUIViewController;
-- (UIViewController*)detailUIViewController;
-- (UITabBarController*)masterTabBarController;
+- (UIViewController<UISplitViewControllerDelegate>*)detailUIViewController;
 - (UINavigationController*)selectedTabBarNavigationController;
 @end
