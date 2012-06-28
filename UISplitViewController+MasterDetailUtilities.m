@@ -14,7 +14,7 @@
 {
 	if ([controller respondsToSelector:@selector(topViewController)])
 		return [controller topViewController];
-	
+
 	return nil;
 }
 
@@ -22,8 +22,11 @@
 	return [self topViewController:[self.viewControllers objectAtIndex:0]];
 }
 
-- (UIViewController*)detailUIViewController {
-	return [self topViewController:[self.viewControllers lastObject]];
+- (UIViewController<UISplitViewControllerDelegate>*)detailUIViewController {
+	id controller = [self topViewController:[self.viewControllers lastObject]]; 
+	assert([controller isKindOfClass:[UIViewController class]]
+		   && [controller conformsToProtocol:@protocol(UISplitViewControllerDelegate)]);
+	return (UIViewController<UISplitViewControllerDelegate>*)controller;
 }
 
 - (UITabBarController*)masterTabBarController {
@@ -40,10 +43,10 @@
 	int selectedIndex = [mVC selectedIndex];
 	if (selectedIndex < 0 || selectedIndex > [mVC viewControllers].count)
 		selectedIndex = 0;
-	UINavigationController* navController = [[mVC viewControllers] objectAtIndex:selectedIndex];
+	id navController = mVC.selectedViewController;
 	if ([navController isKindOfClass:[UINavigationController class]])
 		return navController;
-	
+
 	return nil;
 }
 
