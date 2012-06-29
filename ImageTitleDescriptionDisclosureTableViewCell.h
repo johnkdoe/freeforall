@@ -10,13 +10,11 @@
 
 @interface ImageTitleDescriptionDisclosureTableViewCell : UITableViewCell
 
-@property (weak, nonatomic) IBOutlet UIView* innerView;
-
 // the following are subviews of the content view.
 // haven't been able to figure out how to hook these up via interface builder
-@property (weak, nonatomic) UIImageView* itddImageView;
-@property (weak, nonatomic) UILabel* itddTitle;
-@property (weak, nonatomic) UILabel* itddDescription;
+@property (weak, nonatomic) IBOutlet UIImageView* itddImageView;
+@property (weak, nonatomic) IBOutlet UILabel* itddTitle;
+@property (weak, nonatomic) IBOutlet UILabel* itddDescription;
 
 @property (strong, nonatomic) NSString* photoId;
 
