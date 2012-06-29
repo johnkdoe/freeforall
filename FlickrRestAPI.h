@@ -3,9 +3,6 @@
 //
 //  Copyright 2012 xolaware
 
-
-#import <Foundation/Foundation.h>
-
 #define FLICKR_API_PHOTO_TITLE @"title"
 #define FLICKR_API_PHOTO_DESCRIPTION @"description._content"
 #define FLICKR_API_PLACE_ID @"place_id"
@@ -25,16 +22,20 @@
 #define FLICKR_API_INTERESTING_FORMAT	@".interestingness.getList&per_page=%d&page=%d%@"
 #define FLICKR_API_RECENT_FORMAT		@".photos.getRecent&per_page=%d&page=%d%@"
 
+@class FlickrPhotoData;
+@class NSArray;
+@class NSDictionary;
+@class NSURL;
+
 @interface FlickrRestAPI
 
 + (NSArray*)recentGeoreferencedPhotos;
 + (NSArray*)topPlaces;
 + (NSArray*)photosInPlace:(NSDictionary*)place maxResults:(int)maxResults;
 + (NSArray*)recentUsingFormat:(NSString*)apiFormat count:(int)maxResults page:(int)page;
-+ (NSDictionary*)readablePlaceParts:(NSDictionary*)photo;
-+ (NSURL*)farmUrlForPhoto:(NSDictionary*)photo withFormat:(NSString*)format;
-+ (NSDictionary*)sizesForPhoto:(NSDictionary*)photo;
-+ (NSURL*)urlForThumbnailAttributionForPhoto:(NSDictionary*)photo;
++ (NSDictionary*)readableParts:(NSDictionary*)place;
++ (NSURL*)farmUrlForPhoto:(FlickrPhotoData*)place withFormat:(NSString*)format;
++ (NSURL*)urlForThumbnailAttributionForPhoto:(FlickrPhotoData*)photo;
 
 #define FLICKR_SAN_DIEGO_URL @"/United+States/California/San+Diego"
 
