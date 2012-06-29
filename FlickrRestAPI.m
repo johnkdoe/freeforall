@@ -5,6 +5,8 @@
 
 #import "FlickrRestAPI.h"
 
+#import "xolawareNetworkRetrieval.h"
+
 /* 
  
  from http://www.flickr.com/services/api/flickr.photos.licenses.getInfo.html
@@ -81,14 +83,21 @@
 	query = [query stringByAppendingFormat:API_LANG_FORMAT, preferredLang];
 	query = [query stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
 //	NSLog(@"query = %@", query);
-	[UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
-	NSData* jsonData = [[NSString stringWithContentsOfURL:[NSURL URLWithString:query]
-												 encoding:NSUTF8StringEncoding error:nil]
+	__block NSData* jsonData;
+	xolawareNetworkRetrieval* networkRetrievalBlock
+	  = [[xolawareNetworkRetrieval alloc] initWithTask:^{
+		  NSError* error;
+		  jsonData = [[NSString stringWithContentsOfURL:[NSURL URLWithString:query]
+											   encoding:NSUTF8StringEncoding error:&error]
 						dataUsingEncoding:NSUTF8StringEncoding];
-	[UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-	return jsonData ? [NSJSONSerialization JSONObjectWithData:jsonData
-													  options:0
-														error:nil]
+#if DEBUG
+		  if (error)
+			  NSLog(@"REST/json: %@", error);
+#endif
+		}];
+	[networkRetrievalBlock execute];
+
+	return jsonData ? [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:nil]
 					: nil;
 }
 
