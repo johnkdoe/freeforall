@@ -4,6 +4,8 @@
 //  Copyright 2012 xolaware
 
 #import "FlickrRestAPI.h"
+#import "FlickrPhotoData.h"
+#import "xolawareBackground.h"
 
 /* 
  
@@ -55,6 +57,9 @@
 
 #define API_PACIFIC_BEACH			@".places.find&query=Pacific+Beach%2C+California%2C+92109"
 
+#define API_PHOTOS	@"photos.photo"
+#define API_PLACES	@"places.place"
+
 @implementation FlickrRestAPI
 
 + (NSDictionary*)availableLanguages {
@@ -71,74 +76,92 @@
 	return _availableLanguages;
 }
 
-+ (NSDictionary *)query:(NSString *)query
-{
++ (NSURL*)fullQueryURL:(NSString*)query {
 	NSString* preferredLang = [[NSLocale preferredLanguages] objectAtIndex:0];
 //	NSLog(@"system language chosen by user = %@", preferredLang);
 	if (!(preferredLang = [[self availableLanguages] objectForKey:preferredLang]))
 		preferredLang = @"en-us";
 //	NSLog(@"flickr available language chosen = %@", preferredLang);
+
 	query = [query stringByAppendingFormat:API_LANG_FORMAT, preferredLang];
-	query = [query stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+	query = [query stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];	
+
 //	NSLog(@"query = %@", query);
-	[UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
-	NSData* jsonData = [[NSString stringWithContentsOfURL:[NSURL URLWithString:query]
-												 encoding:NSUTF8StringEncoding error:nil]
-						dataUsingEncoding:NSUTF8StringEncoding];
-	[UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-	return jsonData ? [NSJSONSerialization JSONObjectWithData:jsonData
-													  options:0
-														error:nil]
+
+	return [NSURL URLWithString:query];
+}
+
++ (NSDictionary*)query:(NSString *)query
+{
+	// prep as much as possible before doing the backgroundTaskWithExpirationHandler thing
+	NSURL* fullRequestURL = [self fullQueryURL:query];
+	xolawareBackgroundTaskBlock jsonDataRetrieval = ^id
+	{
+		NSError* error;
+		id result = [[NSString stringWithContentsOfURL:fullRequestURL
+											  encoding:NSUTF8StringEncoding
+												 error:&error]
+					 dataUsingEncoding:NSUTF8StringEncoding];
+#if DEBUG
+		if (error)
+			NSLog(@"REST/json: %@", error);
+#endif
+		return result;
+	};
+
+	// xolawareBackground just means this task will continue running if the app goes background
+	id jsonData = [[xolawareBackground retriever:jsonDataRetrieval] getData];
+	return jsonData ? [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:nil]
 					: nil;
 }
 
-+ (NSDictionary*)readablePlaceParts:(NSDictionary*)photo
++ (NSArray*)flickrPhotosQuery:(NSString*)request {
+	id apiPhotos = [[self query:request] valueForKeyPath:API_PHOTOS];
+	return [FlickrPhotoData flickrPhotoArray:apiPhotos];
+}
+
++ (NSDictionary*)readableParts:(NSDictionary*)place
 {
 	
 	NSString* request
 	  = [API_REST_QUERY stringByAppendingFormat:API_PLACE_ARGS_FORMAT,
-												[photo valueForKey:FLICKR_API_PLACE_ID]];
+												[place valueForKey:FLICKR_API_PLACE_ID]];
 	return [FlickrRestAPI query:request];
 }
 
-+ (NSArray*)recentGeoreferencedPhotos
-{
++ (NSArray*)recentGeoreferencedPhotos {
     NSString* request = [API_REST_QUERY stringByAppendingFormat:API_GEOREF_ARGS_FORMAT,
 																API_EXTRAS_ARGS];
-    return [[FlickrRestAPI query:request] valueForKeyPath:@"photos.photo"];
+    return [FlickrRestAPI flickrPhotosQuery:request];
 }
 
-+ (NSArray*)topPlaces
-{
++ (NSArray*)topPlaces {
     NSString* request = [API_REST_QUERY stringByAppendingString:API_TOP_PLACES_ARGS];
-    return [[FlickrRestAPI query:request] valueForKeyPath:@"places.place"];
+    return [[FlickrRestAPI query:request] valueForKeyPath:API_PLACES];
 }
 
-+ (NSDictionary*)pacificBeach
-{
++ (NSDictionary*)pacificBeach {
 	NSString* request = [API_REST_QUERY stringByAppendingString:API_PACIFIC_BEACH];
-	NSArray* resultArray = [[FlickrRestAPI query:request] valueForKeyPath:@"places.place"];
+	NSArray* resultArray = [[FlickrRestAPI query:request] valueForKeyPath:API_PLACES];
 	return [resultArray objectAtIndex:0];
 }
 
-+ (NSArray*)photosInPlace:(NSDictionary *)place maxResults:(int)maxResults
-{
++ (NSArray*)photosInPlace:(NSDictionary *)place maxResults:(int)maxResults {
     NSString* placeId = [place objectForKey:FLICKR_API_PLACE_ID];
-    if (placeId)
-	{
-        NSString* request
-		  = [API_REST_QUERY stringByAppendingFormat:API_PLACE_PHOTOS_FORMAT,
-													placeId, maxResults, API_EXTRAS_ARGS];
-        return [[FlickrRestAPI query:request] valueForKeyPath:@"photos.photo"];
-    }
-    return nil;
+    if (!placeId)
+		return nil;
+
+	NSString* request
+	  = [API_REST_QUERY stringByAppendingFormat:API_PLACE_PHOTOS_FORMAT, placeId, maxResults, 
+												API_EXTRAS_ARGS];
+	return [FlickrRestAPI flickrPhotosQuery:request];
 }
 
 + (NSArray*)recentUsingFormat:(NSString*)apiFormat count:(int)maxResults page:(int)page
 {
 	NSString* request = [API_REST_QUERY stringByAppendingFormat:apiFormat, maxResults, page,
 																API_EXTRAS_ARGS];
-	return [[FlickrRestAPI query:request] valueForKeyPath:@"photos.photo"];
+	return [FlickrRestAPI flickrPhotosQuery:request];
 }
 
 #ifdef DEBUG
@@ -153,8 +176,7 @@
 }
 #endif
 
-+ (NSString*)farmURLforPhoto:(NSDictionary*)photo withFormat:(NSString*)format
-{
++ (NSString*)farmURLforPhoto:(FlickrPhotoData*)photo withFormat:(NSString*)format {
 	/*
 		from http://www.flickr.com/services/api/flickr.photos.getSizes.html
 	 
@@ -236,20 +258,18 @@
 									  farm, server, photo_id, secret, formatChar, fileType];
 }
 
-+ (NSURL *)farmUrlForPhoto:(NSDictionary*)photo withFormat:(NSString*)format
-{
++ (NSURL *)farmUrlForPhoto:(FlickrPhotoData*)photo withFormat:(NSString*)format {
     return [NSURL URLWithString:[self farmURLforPhoto:photo withFormat:format]];
 }
 
-+ (NSDictionary*)sizesForPhoto:(NSDictionary*)photo
++ (NSDictionary*)sizesForPhoto:(FlickrPhotoData*)photo
 {
 	NSString* request
-	  = [API_REST_QUERY stringByAppendingFormat:API_PHOTO_SIZES_FORMAT,
-												[photo valueForKey:FLICKR_API_PHOTO_ID]];
+	  = [API_REST_QUERY stringByAppendingFormat:API_PHOTO_SIZES_FORMAT, [photo idFlickr]];
 	return [FlickrRestAPI query:request];
 }
 
-+ (NSURL*)urlForThumbnailAttributionForPhoto:(NSDictionary*)photo
++ (NSURL*)urlForThumbnailAttributionForPhoto:(FlickrPhotoData*)photo
 {
 	NSDictionary* sizes = [FlickrRestAPI sizesForPhoto:photo];
 	NSString* fallback;
