@@ -7,6 +7,7 @@
 #include "xolawareOpenSourceCopyright.h"	//  Copyright (c) 2012 xolaware.
 
 #import "MapViewController.h"
+#import "UINavigationController+NestedNavigationController.h"
 
 @interface MapViewController () <MKMapViewDelegate>
 
@@ -23,6 +24,7 @@
 @synthesize delegate = _delegate;
 @synthesize mapView = _mapView;
 @synthesize mapTypeSegmentedControl = _mapTypeSegmentedControl;
+@synthesize nestedNavControllerHandler = _nestedNavControllerHandler;
 
 - (void)setMapView:(MKMapView*)mapView
 {
@@ -70,6 +72,10 @@
 	return MKCoordinateRegionMake(c, MKCoordinateSpanMake(deltaNorthSouth, deltaEastWest));
 }
 
+- (IBAction)mapType:(UISegmentedControl*)segmentedControl {
+	[self.mapView setMapType:(MKMapType)segmentedControl.selectedSegmentIndex];
+}
+
 - (void)updateMapView
 {
 	if (self.mapView.annotations)
@@ -89,10 +95,6 @@
 	}
 }
 
-- (IBAction)mapType:(UISegmentedControl*)segmentedControl {
-	[self.mapView setMapType:(MKMapType)segmentedControl.selectedSegmentIndex];
-}
-
 #pragma mark - UIViewController life cycle // overrides
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -100,21 +102,19 @@
 	[self.mapTypeSegmentedControl addTarget:self
 									 action:@selector(mapType:)
 						   forControlEvents:UIControlEventValueChanged];
-}
-
-- (void)viewDidAppear:(BOOL)animated {
-	[super viewDidAppear:animated];
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
-		[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackTranslucent;
+		[[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleBlackTranslucent
+													animated:animated];	
 }
 
-- (void)viewWillDisappear:(BOOL)animated {
+- (void)viewDidDisappear:(BOOL)animated {
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
 	{
-		[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackOpaque;
-		[self.navigationController popViewControllerAnimated:YES];
-	}	
-	[super viewWillDisappear:animated];
+		[[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleBlackOpaque
+													animated:animated];
+		[self.navigationController popToEligibleViewController:self.nestedNavControllerHandler
+													  animated:NO];
+	}
 }
 
 - (void)viewDidUnload
@@ -128,8 +128,13 @@
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
 	if ([@"iPhoneAnnotationLeftAccessory" isEqualToString:segue.identifier])
+	{
+		id desintationVC = segue.destinationViewController;
+		if ([desintationVC respondsToSelector:@selector(setNestedNavControllerHandler:)])
+			[desintationVC setNestedNavControllerHandler:self.nestedNavControllerHandler];
 		[self.delegate acceptSegueFromAnnotation:sender
-					forDestinationViewController:segue.destinationViewController];
+					forDestinationViewController:desintationVC];
+	}
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
