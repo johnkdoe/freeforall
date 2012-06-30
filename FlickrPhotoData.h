@@ -29,6 +29,8 @@
 @property (readonly) NSURL* originatingURL;
 @property (readonly) NSDictionary* imageRetrievalError;
 
+- (NSUInteger)findMatchingIndexInPhotoArray:(NSArray*)photoSet;
+
 //- (UIImage*)retrieveImageWithFormat:(NSString*)format;
 //- (UIImage*)retrieveImage;
 

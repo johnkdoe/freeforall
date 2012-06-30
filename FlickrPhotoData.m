@@ -194,6 +194,16 @@
 	return nil != _imageRetrievalError;
 }
 
+- (NSUInteger)findMatchingIndexInPhotoArray:(NSArray*)photoSet {
+	NSString* photoID = self.idFlickr;
+	typedef BOOL (^photoMatcherBlockType)(id obj, NSUInteger idx, BOOL* stop);
+	photoMatcherBlockType photoMatcherBlock = ^(id obj, NSUInteger idx, BOOL* stop) {
+		NSString* recentPhotoID = [obj idFlickr];
+		return (*stop = [photoID isEqualToString:recentPhotoID]);		
+	};
+	return [photoSet indexOfObjectPassingTest:photoMatcherBlock];
+}
+
 - (UIImage*)retrieveNetworkImageWithFormat:(NSString*)format
 {
 	NSURL* photoURL = [FlickrRestAPI farmUrlForPhoto:self withFormat:format];
