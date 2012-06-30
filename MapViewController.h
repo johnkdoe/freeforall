@@ -8,6 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import <MapKit/MapKit.h>
+#import "NestedNavigationControllerHandler.h"
 
 @class MapViewController;
 
@@ -33,5 +34,6 @@
 @property (strong, nonatomic) NSArray* annotations;	// of id<MKAnnotation>
 
 @property (weak, nonatomic) id<MapViewControllerDelegate> delegate;
+@property (weak, nonatomic) id<NestedNavigationControllerHandler> nestedNavControllerHandler;
 
 @end
