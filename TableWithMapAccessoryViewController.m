@@ -27,6 +27,8 @@
 @synthesize retrievalDate = _retrievalDate;
 @synthesize systemLocaleFormatter = _systemLocaleFormatter;
 
+#pragma mark - syntheisize overrides
+
 - (NSDateFormatter*)systemLocaleFormatter
 {
 	if (!_systemLocaleFormatter)
@@ -80,6 +82,12 @@
 
 #pragma mark - public implementation
 
+- (BOOL)annotateMap:(MapViewController*)mapVC forRowAtIndexPath:(NSIndexPath*)indexPath
+{
+	mapVC.delegate = self;
+	return YES;
+}
+
 - (void)setDateBasedTitleForOrientation:(UIInterfaceOrientation)orientation
 {
 	NSString* localeDate = [self.systemLocaleFormatter stringFromDate:self.retrievalDate];
@@ -119,14 +127,6 @@
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-	return YES;
-}
-
-#pragma mark - ScrollableImageAndMapMasterTableViewController
-
-- (BOOL)annotateMap:(MapViewController*)mapVC forRowAtIndexPath:(NSIndexPath*)indexPath
-{
-	mapVC.delegate = self;
 	return YES;
 }
 
