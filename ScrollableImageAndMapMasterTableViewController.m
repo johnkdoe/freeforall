@@ -6,21 +6,21 @@
 
 #include "xolawareOpenSourceCopyright.h"	//  Copyright (c) 2012 xolaware.
 
-#import "ScrollableImageAndMapMasterTableViewController.h"
+#import "TableWithMapAccessoryViewController.h"
 
 #import "UISplitViewController+MasterDetailUtilities.h"
 #import "xolawareReachability.h"
 
 #import "FlipsideViewController.h"
 #import "MapViewController.h"
-#import "ScrollableImageDetailViewController.h"
+#import "SplitViewTitle.h"
 
-@interface ScrollableImageAndMapMasterTableViewController ()
+@interface TableWithMapAccessoryViewController ()
 	<MapViewControllerDelegate, UITableViewDelegate>
 
 @end
 
-@implementation ScrollableImageAndMapMasterTableViewController
+@implementation TableWithMapAccessoryViewController
 
 @synthesize mapPopover = _mapPopover;
 @synthesize objects = _objects;
@@ -89,8 +89,10 @@
 	self.navigationItem.title = localeDate;	
 }
 
-- (void)tableViewReorderedPhotosData:(NSArray *)reorderedPhotosData {
-	_objects = reorderedPhotosData;
+- (void)setNestedNavControllerHandlerInViewController:(UIViewController*)uiVC {
+	if ([self.tabBarController conformsToProtocol:@protocol(NestedNavigationControllerHandler)]
+		&& [uiVC respondsToSelector:@selector(setNestedNavControllerHandler:)])
+		[(id)uiVC setNestedNavControllerHandler:(id)self.tabBarController];
 }
 
 #pragma mark - UITableViewController life cycle // overrides
@@ -111,9 +113,8 @@
 - (void)viewDidAppear:(BOOL)animated
 {
 	[super viewDidAppear:animated];
-	ScrollableImageDetailViewController* sidVC
-	  = (ScrollableImageDetailViewController*)(self.splitViewController.detailUIViewController);
-	[sidVC resetSplitViewBarButtonTitle];
+	if ([self.splitViewController.detailUIViewController conformsToProtocol:@protocol(SplitViewTitle)])
+		[(id)self.splitViewController.detailUIViewController resetSplitViewBarButtonTitle];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
@@ -151,12 +152,11 @@
 	moveRowAtIndexPath:(NSIndexPath*)sourceIndexPath
 		   toIndexPath:(NSIndexPath*)destinationIndexPath
 {
-	NSMutableArray* reorderedObjects = self.objects.mutableCopy;
+	NSMutableArray* reorderedObjects = _objects.mutableCopy;
 	NSObject* objectToMove = [reorderedObjects objectAtIndex:sourceIndexPath.row];
 	[reorderedObjects removeObjectAtIndex:sourceIndexPath.row];
 	[reorderedObjects insertObject:objectToMove atIndex:destinationIndexPath.row];
-	[self tableViewReorderedPhotosData:[NSArray arrayWithArray:reorderedObjects]];
-	self.objects = [reorderedObjects copy];
+	_objects = reorderedObjects.copy;
 }
 
 #pragma mark - UITableViewDelegate protocol 
@@ -185,6 +185,22 @@
 	else
 	{
 		[xolawareReachability alertNetworkUnavailable];
+	}
+}
+
+- (void)	 tableView:(UITableView*)tableView
+	commitEditingStyle:(UITableViewCellEditingStyle)editingStyle
+	 forRowAtIndexPath:(NSIndexPath*)indexPath
+{
+	if (editingStyle == UITableViewCellEditingStyleDelete)
+	{
+		NSMutableArray* objectsMinusThis = _objects.mutableCopy;
+		[objectsMinusThis removeObjectAtIndex:indexPath.row];
+		[tableView beginUpdates];
+		[tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] 
+						 withRowAnimation:YES];
+		_objects = objectsMinusThis;
+		[tableView endUpdates];
 	}
 }
 

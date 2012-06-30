@@ -11,8 +11,9 @@
 
 @class MapViewController;
 
-@interface ScrollableImageAndMapMasterTableViewController
+@interface TableWithMapAccessoryViewController
 	: UITableViewController <FlipsideViewControllerDelegate, SecondaryQueuePhotoReceiver>
+
 @property (strong, nonatomic) NSArray* objects;
 @property (strong, nonatomic) NSDate* retrievalDate;
 @property (readonly, strong, nonatomic) NSDateFormatter* systemLocaleFormatter;
@@ -20,8 +21,9 @@
 
 - (BOOL)annotateMap:(MapViewController*)mapVC forRowAtIndexPath:(NSIndexPath*)indexPath;
 
-- (void)tableViewReorderedPhotosData:(NSArray*)reorderedPhotosData;
-
 - (void)setDateBasedTitleForOrientation:(UIInterfaceOrientation)orientation;
+
+// this is for when this class implementation is nested in a UITabBarController, etc
+- (void)setNestedNavControllerHandlerInViewController:(UIViewController*)uiViewController;
 
 @end
