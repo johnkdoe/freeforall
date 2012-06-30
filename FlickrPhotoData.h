@@ -24,6 +24,8 @@
 @property (readonly) NSString* title;
 @property (readonly) NSString* descriptionContent;
 @property (readonly, getter = hasLatitudeLongitude) BOOL latitudeLongitude;
+@property (readonly) NSDecimalNumber* latitude;
+@property (readonly) NSDecimalNumber* longitude;
 @property (readonly) NSURL* originatingURL;
 @property (readonly) NSDictionary* imageRetrievalError;
 
