@@ -163,8 +163,8 @@
 
 - (BOOL)hasLatitudeLongitude
 {
-	NSDecimalNumber* latitude = [_plainPhotoDataDictionary objectForKey:FLICKR_API_LATITUDE];
-	NSDecimalNumber* longitude = [_plainPhotoDataDictionary objectForKey:FLICKR_API_LONGITUDE];
+	NSDecimalNumber* latitude = self.latitude;
+	NSDecimalNumber* longitude = self.longitude;
 	if (!(latitude && longitude))	// don't care if we have one but not both; bounce back NO
 		return NO;
 	
@@ -176,6 +176,14 @@
 	
 	// not going to bother with photos that say they're geotagged t {0, 0}
 	return NO;
+}
+
+- (NSDecimalNumber*)latitude {
+	return [_plainPhotoDataDictionary objectForKey:FLICKR_API_LATITUDE];
+}
+
+- (NSDecimalNumber*)longitude {
+	return [_plainPhotoDataDictionary objectForKey:FLICKR_API_LONGITUDE];
 }
 
 - (NSURL*)originatingURL {
