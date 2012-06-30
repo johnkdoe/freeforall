@@ -12,6 +12,7 @@
 
 #import "FlipsideViewController.h"
 
+#import "UINavigationController+NestedNavigationController.h"
 #import "UISplitViewController+MasterDetailUtilities.h"
 #import "UITabBarController+HideTabBar.h"					// thank you Carlos Oliva
 
@@ -51,6 +52,7 @@
 
 @synthesize image = _image;
 @synthesize originatingURL = _originatingURL;
+@synthesize nestedNavControllerHandler = _nestedNavControllerHandler;
 
 @synthesize singleTapGesture = _singleTapGesture;
 @synthesize doubleTapGesture = _doubleTapGesture;
@@ -117,11 +119,6 @@
 }
 
 #pragma mark - ScrollableImageDetailViewController public implementation
-
-- (void)resetSplitViewBarButtonTitle {
-	self.navigationItem.leftBarButtonItem.title
-	  = self.splitViewController.selectedTabBarNavigationController.topViewController.title;
-}
 
 - (void)setImageTitle:(NSString*)imageTitle {
 	// setting self.navigationItem.title here causes self.title to change!
@@ -512,11 +509,16 @@ typedef void (^completionBlock)(BOOL);
 	}
 }
 
+- (void)viewWillAppear:(BOOL)animated {
+	[super viewWillAppear:animated];
+	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
+		[[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleBlackTranslucent
+													animated:animated];	
+}
+
 - (void)viewDidAppear:(BOOL)animated
 {
 	[super viewDidAppear:animated];
-	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
-		[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackTranslucent;
 	
 	if (UIUserInterfaceIdiomPhone == [[UIDevice currentDevice] userInterfaceIdiom])
 	{
@@ -542,18 +544,20 @@ typedef void (^completionBlock)(BOOL);
 		[self setBarsHidden:NO animated:animated];
 
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
-	{
-		[UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleBlackOpaque;
 		[self removeNotificationObservers];
-	}
+
 	[super viewWillDisappear:animated];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
 {
-	// i.e. we stepped away from this tab, and not via the back button
-	if (self.navigationController != self.tabBarController.selectedViewController)
-		[self.navigationController popViewControllerAnimated:YES];
+	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
+	{
+		[[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleBlackOpaque
+													animated:animated];
+		[self.navigationController popToEligibleViewController:self.nestedNavControllerHandler
+													  animated:NO];
+	}
 
 	[super viewDidDisappear:animated];
 }
@@ -742,7 +746,14 @@ typedef void (^completionBlock)(BOOL);
     }
 }
 
-#pragma mark - UIPopoverControllerDelegate implementation
+#pragma mark - SplitViewTitle protocol implementation
+
+- (void)resetSplitViewBarButtonTitle {
+	self.navigationItem.leftBarButtonItem.title
+	= self.splitViewController.selectedTabBarNavigationController.topViewController.title;
+}
+
+#pragma mark - UIPopoverControllerDelegate protocol implementation
 
 - (void)popoverControllerDidDismissPopover:(UIPopoverController*)popoverController
 {
@@ -750,14 +761,14 @@ typedef void (^completionBlock)(BOOL);
 	self.flipsidePopoverController = nil;
 }
 
-#pragma mark - UIScrollViewDelegate
+#pragma mark - UIScrollViewDelegate protocol implementation
 #pragma mark @optional
 
 - (UIView*)viewForZoomingInScrollView:(UIScrollView*)scrollView {
 	return self.nestedImageView;
 }
 
-#pragma mark - UISplitViewControllerDelegate
+#pragma mark - UISplitViewControllerDelegate protocol implementation
 #pragma mark @optional
 
 - (void)splitViewController:(UISplitViewController*)splitController
