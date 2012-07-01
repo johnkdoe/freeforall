@@ -207,6 +207,8 @@
 - (UIImage*)retrieveNetworkImageWithFormat:(NSString*)format
 {
 	NSURL* photoURL = [FlickrRestAPI farmUrlForPhoto:self withFormat:format];
+	if (!photoURL)
+		return nil;
 
 	xolawareBackgroundTaskBlock photoRetriever = ^id
 	{
