@@ -40,6 +40,8 @@
 @property BOOL ignoreExceptionallyUglyStatusBarWillChangeFrameNotificationKludgeHackWorkaround;
 @property (readonly) CGSize recommendedZoomScales;
 
+@property UIStatusBarStyle callerStatusBarStyle;
+
 @property (strong, nonatomic) xolawareReachability* internetReachability;
 
 @property (strong, nonatomic) IBOutlet UILongPressGestureRecognizer *tripleTap3FingerThenHoldGesture;
@@ -69,6 +71,8 @@
 @synthesize networkUnavailableLabel = _networkUnavailableLabel;
 
 @synthesize titleForNoImage = _titleForNoImage;
+
+@synthesize callerStatusBarStyle = _callerStatusBarStyle;
 
 @synthesize internetReachability = _internetReachability;
 
@@ -512,8 +516,12 @@ typedef void (^completionBlock)(BOOL);
 - (void)viewWillAppear:(BOOL)animated {
 	[super viewWillAppear:animated];
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
-		[[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleBlackTranslucent
-													animated:animated];	
+	{
+		UIApplication* app = [UIApplication sharedApplication];
+		self.callerStatusBarStyle = app.statusBarStyle;
+		if (UIStatusBarStyleBlackTranslucent != self.callerStatusBarStyle)
+			[app setStatusBarStyle:UIStatusBarStyleBlackTranslucent animated:animated];
+	}
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -553,8 +561,9 @@ typedef void (^completionBlock)(BOOL);
 {
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
 	{
-		[[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleBlackOpaque
-													animated:animated];
+		if (UIStatusBarStyleBlackTranslucent != self.callerStatusBarStyle)
+			[[UIApplication sharedApplication] setStatusBarStyle:self.callerStatusBarStyle 
+														animated:animated];
 		[self.navigationController popToEligibleViewController:self.nestedNavControllerHandler
 													  animated:NO];
 	}
