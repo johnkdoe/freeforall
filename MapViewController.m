@@ -20,29 +20,83 @@
 
 #pragma mark -
 
+@implementation MapViewBasicAnnotation
+
+@synthesize coordinate = _coordinate;
+@synthesize title = _title;
+@synthesize subtitle = _subtitle;
+
+- (MapViewBasicAnnotation*)	initWithCoordinate:(CLLocationCoordinate2D)coordinate2D
+										 title:(NSString*)title 
+									  subtitle:(NSString*)subtitle
+{
+	self = [super init];
+	if (self)
+		_coordinate = coordinate2D, _title = title, _subtitle = subtitle;
+	return self;
+}
+
++ (MapViewBasicAnnotation*)basicAnnotation:(CLLocationCoordinate2D)coord2D
+									 title:(NSString*)title
+								  subtitle:(NSString*)sub 
+{
+	return [[MapViewBasicAnnotation alloc] initWithCoordinate:coord2D title:title subtitle:sub];
+}
+
+- (void)setCoordinate:(CLLocationCoordinate2D)newCoordinate {
+	_coordinate = newCoordinate;
+}
+@end
+
+#pragma mark -
+
 @implementation MapViewController
 
 #pragma mark @synthesize
+@synthesize annotations = _annotations;
 @synthesize callerStatusBarStyle = _callerStatusBarStyle;
 @synthesize delegate = _delegate;
+@synthesize initialLocation = _initialLocation;
 @synthesize mapView = _mapView;
 @synthesize mapTypeSegmentedControl = _mapTypeSegmentedControl;
 @synthesize nestedNavControllerHandler = _nestedNavControllerHandler;
 
-- (void)setMapView:(MKMapView*)mapView
-{
-	_mapView = mapView;
-	[self updateMapView];	// keep model and view in sync
-}
+#pragma mark - synthesize overrides
 
-@synthesize annotations = _annotations;
-- (void)setAnnotations:(NSArray *)annotations
-{
+- (void)setAnnotations:(NSArray *)annotations {
 	_annotations = annotations;
 	[self updateMapView];	// keep model and view in sync
 }
 
+- (void)setInitialLocation:(id<MKAnnotation>)initialLocation {
+	_initialLocation = initialLocation;
+	[self updateMapView];
+}
+
+- (void)setMapView:(MKMapView*)mapView {
+	_mapView = mapView;
+	[self updateMapView];
+}
+
 #pragma mark // MapViewController private implementation
+
+- (MKCoordinateRegion)coordinateRegionCrossingInternationalDateLine
+{
+	CLLocationDegrees n = -90.0, s = 90.0, e = 180.0, w = -180.0;
+	for (id<MKAnnotation> a in self.annotations)
+	{
+		if (a.coordinate.latitude > n)	n = a.coordinate.latitude;
+		if (a.coordinate.latitude < s)	s = a.coordinate.latitude;
+		if (a.coordinate.longitude < e)	e = a.coordinate.longitude;
+		if (a.coordinate.longitude > w)	w = a.coordinate.longitude;
+	}
+	double width = (180.0-e) - (-180.0-w);
+	CLLocationDegrees longitude = (((e > abs(w)) ? -180 : 180) - width/2);
+	CLLocationCoordinate2D c = { (n+s)/2, longitude };
+	CLLocationDegrees deltaNorthSouth = MAX(0.0666666, (n-s)*1.1);
+	CLLocationDegrees widthSpan = MAX(0.0666666, width*1.1);
+	return MKCoordinateRegionMake(c, MKCoordinateSpanMake(deltaNorthSouth, widthSpan));	
+}
 
 - (MKCoordinateRegion)coordinateRegionUsingAnnotations
 {
@@ -54,26 +108,15 @@
 		if (a.coordinate.longitude > e)	e = a.coordinate.longitude;
 		if (a.coordinate.longitude < w)	w = a.coordinate.longitude;
 		if ((e-w) > 300)	// likely crossing int'l date line
-		{
-			e = 180.0, w = -180.0;
-			for (id<MKAnnotation> a in self.annotations)
-			{
-				if (a.coordinate.latitude > n)	n = a.coordinate.latitude;
-				if (a.coordinate.latitude < s)	s = a.coordinate.latitude;
-				if (a.coordinate.longitude < e)	e = a.coordinate.longitude;
-				if (a.coordinate.longitude > w)	w = a.coordinate.longitude;
-			}
-			double width = (180.0-e) - (-180.0-w);
-			CLLocationDegrees longitude = (((e > abs(w)) ? -180 : 180) - width/2);
-			CLLocationCoordinate2D c = { (n+s)/2, longitude };
-			return MKCoordinateRegionMake(c, MKCoordinateSpanMake((n-s)*1.05, width*1.05));
-		}
+			return self.coordinateRegionCrossingInternationalDateLine;
 	}
 	CLLocationCoordinate2D c = { (n+s)/2, (e+w)/2 };
-	CLLocationDegrees deltaNorthSouth = MAX(0.09, (n-s)*1.05);
-	CLLocationDegrees deltaEastWest   = MAX(0.09, (e-w)*1.05);
+	CLLocationDegrees deltaNorthSouth = MAX(0.0666666, (n-s)*1.1);
+	CLLocationDegrees deltaEastWest   = MAX(0.0666666, (e-w)*1.1);
 	return MKCoordinateRegionMake(c, MKCoordinateSpanMake(deltaNorthSouth, deltaEastWest));
 }
+
+- (MKCoordinateSpan)defaultSpan { return MKCoordinateSpanMake(0.2, 0.2); }
 
 - (IBAction)mapType:(UISegmentedControl*)segmentedControl {
 	[self.mapView setMapType:(MKMapType)segmentedControl.selectedSegmentIndex];
@@ -81,20 +124,24 @@
 
 - (void)updateMapView
 {
-	if (self.mapView.annotations)
-		[self.mapView removeOverlays:self.mapView.annotations];
+	if (!self.mapView)
+		return;
 	if (self.annotations)
 	{
 		[self.mapView addAnnotations:self.annotations];
 		if (self.annotations.count == 1)
 		{
-			id<MKAnnotation> annotation = self.annotations.lastObject;
-			self.title = annotation.title;
-			self.mapView.region
-			  = MKCoordinateRegionMake(annotation.coordinate, MKCoordinateSpanMake(0.2, 0.2));
+			id<MKAnnotation> point = self.annotations.lastObject;
+			self.title = point.title;
+			[self.mapView setRegion:MKCoordinateRegionMake(point.coordinate, self.defaultSpan)
+						   animated:YES];
 		}
 		else
 			[self.mapView setRegion:[self coordinateRegionUsingAnnotations] animated:YES];
+	} else if (self.initialLocation) {
+		self.title = self.initialLocation.title;
+		self.mapView.region
+		  = MKCoordinateRegionMake(self.initialLocation.coordinate, self.defaultSpan);
 	}
 }
 
@@ -175,6 +222,9 @@
 - (void)mapView:(MKMapView *)mapView didSelectAnnotationView:(MKAnnotationView*)view
 {
 	UIImage* image = [self.delegate mapViewController:self imageForAnnotation:view.annotation];
+	if (!image)
+		return;
+
 	[(UIButton*)view.leftCalloutAccessoryView setImage:image forState:UIControlStateNormal];
 	UIControlState controlStatesMask = UIControlStateHighlighted | UIControlStateSelected;
 	[(UIButton*)view.leftCalloutAccessoryView setImage:image forState:controlStatesMask];
@@ -184,6 +234,8 @@
 				   annotationView:(MKAnnotationView*)view
 	calloutAccessoryControlTapped:(UIControl*)control
 {
+	assert(view.annotation);
+	if (!view.annotation)	return;
 	if ([self.delegate.mapPopover isKindOfClass:[UIPopoverController class]])
 		[self.delegate acceptSegueFromAnnotation:view.annotation
 					forDestinationViewController:nil];	// delegate will figure it out

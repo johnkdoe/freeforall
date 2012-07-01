@@ -28,8 +28,16 @@
 	 forDestinationViewController:(UIViewController*)sender;
 
 @end
-   
+
+@interface MapViewBasicAnnotation : NSObject<MKAnnotation>
++ (MapViewBasicAnnotation*) basicAnnotation:(CLLocationCoordinate2D)coordinate2D
+									  title:(NSString*)title
+								   subtitle:(NSString*)subtitle;
+@end
+
 @interface MapViewController : UIViewController
+
+@property (strong, nonatomic) id<MKAnnotation> initialLocation;
 
 @property (strong, nonatomic) NSArray* annotations;	// of id<MKAnnotation>
 
