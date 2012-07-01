@@ -10,8 +10,8 @@
 #import "NestedNavigationControllerHandler.h"
 #import "SplitViewTitle.h"
 
-@interface ScrollableImageDetailViewController
-  : KludgeWorkaroundForBuggySplitViewDelegateStartup<SplitViewTitle, UIScrollViewDelegate>;
+@interface ScrollableImageDetailViewController : UIViewController
+	<UIScrollViewDelegate, SplitViewTitle>;
 
 @property (strong, nonatomic) UIImage* image;
 @property (strong, nonatomic) NSURL* originatingURL;

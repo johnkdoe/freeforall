@@ -11,6 +11,7 @@
 #import <CoreTelephony/CTCall.h>
 
 #import "FlipsideViewController.h"
+#import "PersistentSplitViewMasterController.h"
 
 #import "UINavigationController+NestedNavigationController.h"
 #import "UISplitViewController+MasterDetailUtilities.h"
@@ -765,8 +766,7 @@ typedef void (^completionBlock)(BOOL);
 #pragma mark - SplitViewTitle protocol implementation
 
 - (void)resetSplitViewBarButtonTitle {
-	self.navigationItem.leftBarButtonItem.title
-	= self.splitViewController.selectedTabBarNavigationController.topViewController.title;
+	self.navigationItem.leftBarButtonItem.title = self.splitViewController.masterTitle;
 }
 
 #pragma mark - UIPopoverControllerDelegate protocol implementation
@@ -782,38 +782,6 @@ typedef void (^completionBlock)(BOOL);
 
 - (UIView*)viewForZoomingInScrollView:(UIScrollView*)scrollView {
 	return self.nestedImageView;
-}
-
-#pragma mark - UISplitViewControllerDelegate protocol implementation
-#pragma mark @optional
-
-- (void)splitViewController:(UISplitViewController*)splitController
-	 willHideViewController:(UIViewController*)viewController
-		  withBarButtonItem:(UIBarButtonItem*)barButtonItem
-	   forPopoverController:(UIPopoverController *)popoverController
-{
-	[super splitViewController:splitController
-		willHideViewController:viewController
-			 withBarButtonItem:barButtonItem
-		  forPopoverController:popoverController];
-	//	[self.navigationItem setLeftBarButtonItem:barButtonItem animated:YES];
-	[self resetSplitViewBarButtonTitle];
-}
-/*
- - (void)splitViewController:(UISplitViewController*)splitController
- willShowViewController:(UIViewController*)viewController
- invalidatingBarButtonItem:(UIBarButtonItem *)barButtonItem
- {
- [super splitViewController:splitController
- willShowViewController:viewController
- invalidatingBarButtonItem:barButtonItem];
- // Called when the view is shown again in the split view, invalidating the button and popover controller.
- //	[self.navigationItem setLeftBarButtonItem:nil animated:YES];
- }
- */
-
-- (NSString*)kludgeWorkaroundMasterViewButtonStartupTitle {
-	return NSLocalizedString(@"top places", "");
 }
 
 @end
