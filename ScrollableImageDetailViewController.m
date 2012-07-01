@@ -11,7 +11,6 @@
 #import <CoreTelephony/CTCall.h>
 
 #import "FlipsideViewController.h"
-#import "PersistentSplitViewMasterController.h"
 
 #import "UINavigationController+NestedNavigationController.h"
 #import "UISplitViewController+MasterDetailUtilities.h"
