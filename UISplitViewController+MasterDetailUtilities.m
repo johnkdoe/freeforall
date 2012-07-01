@@ -12,21 +12,11 @@
 
 - (UIViewController*)topViewController:(id)controller
 {
+	if ([controller isKindOfClass:[UITabBarController class]])
+		controller = [controller selectedViewController];
 	if ([controller respondsToSelector:@selector(topViewController)])
 		return [controller topViewController];
-
 	return nil;
-}
-
-- (UIViewController*)masterUIViewController {
-	return [self topViewController:[self.viewControllers objectAtIndex:0]];
-}
-
-- (UIViewController<UISplitViewControllerDelegate>*)detailUIViewController {
-	id controller = [self topViewController:[self.viewControllers lastObject]]; 
-	assert([controller isKindOfClass:[UIViewController class]]
-		   && [controller conformsToProtocol:@protocol(UISplitViewControllerDelegate)]);
-	return (UIViewController<UISplitViewControllerDelegate>*)controller;
 }
 
 - (UITabBarController*)masterTabBarController {
@@ -36,18 +26,18 @@
 	return nil;
 }
 
-- (UINavigationController*)selectedTabBarNavigationController {
-	UITabBarController* mVC = self.masterTabBarController;
-	if (![mVC isKindOfClass:[UITabBarController class]])
-		return nil;
-	int selectedIndex = [mVC selectedIndex];
-	if (selectedIndex < 0 || selectedIndex > [mVC viewControllers].count)
-		selectedIndex = 0;
-	id navController = mVC.selectedViewController;
-	if ([navController isKindOfClass:[UINavigationController class]])
-		return navController;
+- (NSString*)masterTitle {
+	return [(UIViewController*)[self.viewControllers objectAtIndex:0] title];
+}
 
-	return nil;
+- (UIViewController*)masterUIViewController {
+	return [self topViewController:[self.viewControllers objectAtIndex:0]];
+}
+
+- (UIViewController*)detailUIViewController {
+	id controller = [self topViewController:[self.viewControllers lastObject]]; 
+	assert([controller isKindOfClass:[UIViewController class]]);
+	return (UIViewController*)controller;
 }
 
 @end

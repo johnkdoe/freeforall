@@ -9,7 +9,12 @@
 #import <UIKit/UIKit.h>
 
 @interface UISplitViewController (MasterDetailUtilities)
+
+- (UIViewController*)detailUIViewController;
 - (UIViewController*)masterUIViewController;
-- (UIViewController<UISplitViewControllerDelegate>*)detailUIViewController;
-- (UINavigationController*)selectedTabBarNavigationController;
+
+- (UITabBarController*)masterTabBarController;
+
+- (NSString*)masterTitle;
+
 @end
