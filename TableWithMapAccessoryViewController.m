@@ -16,7 +16,7 @@
 #import "SplitViewTitle.h"
 
 @interface TableWithMapAccessoryViewController ()
-	<MapViewControllerDelegate, UITableViewDelegate>
+	<UITableViewDataSource, UITableViewDelegate, MapViewControllerDelegate>
 
 @end
 
@@ -29,8 +29,7 @@
 
 #pragma mark - syntheisize overrides
 
-- (NSDateFormatter*)systemLocaleFormatter
-{
+- (NSDateFormatter*)systemLocaleFormatter {
 	if (!_systemLocaleFormatter)
 	{
 		_systemLocaleFormatter = [[NSDateFormatter alloc] init];
@@ -51,8 +50,7 @@
 
 }
 
-- (void)setObjects:(NSArray*)newObjects
-{
+- (void)setObjects:(NSArray*)newObjects {
 	int delta;
 	NSUInteger newCount = newObjects.count;
 	if (_objects && newObjects && 0 < (delta = newCount - _objects.count))
@@ -82,8 +80,7 @@
 
 #pragma mark - public implementation
 
-- (BOOL)annotateMap:(MapViewController*)mapVC forRowAtIndexPath:(NSIndexPath*)indexPath
-{
+- (BOOL)annotateMap:(MapViewController*)mapVC forRowAtIndexPath:(NSIndexPath*)indexPath {
 	mapVC.delegate = self;
 	return YES;
 }
@@ -105,8 +102,7 @@
 
 #pragma mark - UITableViewController life cycle // overrides
 
-- (void)viewDidLoad
-{
+- (void)viewDidLoad {
     [super viewDidLoad];
 	self.title = NSLocalizedString(self.title, nil);
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
@@ -118,15 +114,13 @@
 	}
 }
 
-- (void)viewDidAppear:(BOOL)animated
-{
+- (void)viewDidAppear:(BOOL)animated {
 	[super viewDidAppear:animated];
 	if ([self.splitViewController.detailUIViewController conformsToProtocol:@protocol(SplitViewTitle)])
 		[(id)self.splitViewController.detailUIViewController resetSplitViewBarButtonTitle];
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
 	return YES;
 }
 
@@ -144,8 +138,20 @@
 	return _objects.count;
 }
 
-- (BOOL)tableView:(UITableView*)tableView canEditRowAtIndexPath:(NSIndexPath*)indexPath {
-    return tableView.isEditing;
+- (void)	 tableView:(UITableView*)tableView
+	commitEditingStyle:(UITableViewCellEditingStyle)editingStyle
+	 forRowAtIndexPath:(NSIndexPath*)indexPath
+{
+	if (editingStyle == UITableViewCellEditingStyleDelete)
+	{
+		NSMutableArray* objectsMinusThis = _objects.mutableCopy;
+		[objectsMinusThis removeObjectAtIndex:indexPath.row];
+		[tableView beginUpdates];
+		[tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] 
+						 withRowAnimation:YES];
+		_objects = objectsMinusThis;
+		[tableView endUpdates];
+	}
 }
 
 -(void)		 tableView:(UITableView*)tableView
@@ -188,22 +194,6 @@
 	}
 }
 
-- (void)	 tableView:(UITableView*)tableView
-	commitEditingStyle:(UITableViewCellEditingStyle)editingStyle
-	 forRowAtIndexPath:(NSIndexPath*)indexPath
-{
-	if (editingStyle == UITableViewCellEditingStyleDelete)
-	{
-		NSMutableArray* objectsMinusThis = _objects.mutableCopy;
-		[objectsMinusThis removeObjectAtIndex:indexPath.row];
-		[tableView beginUpdates];
-		[tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] 
-						 withRowAnimation:YES];
-		_objects = objectsMinusThis;
-		[tableView endUpdates];
-	}
-}
-
 #pragma mark - FlipsideViewControllerDelegate implementation
 
 - (BOOL)scrollsToTop {
@@ -214,8 +204,7 @@
 	self.tableView.scrollsToTop = scrollsToTop;
 }
 
-- (void)flipsideViewControllerDidFinish:(FlipsideViewController*)controller
-{
+- (void)flipsideViewControllerDidFinish:(FlipsideViewController*)controller {
     if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
         [self dismissModalViewControllerAnimated:YES];		
 }
