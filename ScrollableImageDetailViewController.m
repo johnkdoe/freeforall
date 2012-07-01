@@ -264,10 +264,10 @@ typedef void (^completionBlock)(BOOL);
 
 - (void)nestImageInScrollView
 {
-	if (self.blindsImageView.hidden)
+	completionBlock deleteOldImageThenNestNewImageInScrollView
+	  = ^(BOOL finished){ [self nestImageInScrollViewButDeleteOldImageFirstIfNecessary]; };
+	if (self.blindsImageView.isHidden)
 	{
-		completionBlock deleteOldImageThenNestNewImageInScrollView
-		  = ^(BOOL finished){ [self nestImageInScrollViewButDeleteOldImageFirstIfNecessary]; };
 		self.blindsImageView.hidden = NO;
 		CGRect visibleBlindsRect = [self visibleBlindsRect];
 		[UIView animateWithDuration:0.22 delay:0.0 options:UIViewAnimationCurveEaseOut
@@ -275,8 +275,12 @@ typedef void (^completionBlock)(BOOL);
 						 completion:deleteOldImageThenNestNewImageInScrollView];
 	}
 	else
-		[self nestImageInScrollViewButDeleteOldImageFirstIfNecessary];
-
+	{
+		// this seems a bit kludgy, but putting this animation in even at 0,0 causes it to work!
+		[UIView animateWithDuration:0.0 delay:0.001 options:UIViewAnimationCurveLinear
+						 animations:^{ self.blindsImageView.frame = [self visibleBlindsRect]; }
+						 completion:deleteOldImageThenNestNewImageInScrollView];
+	}
 }
 
 - (void)reachabilityChanged:(NSNotification*)note
@@ -314,10 +318,10 @@ typedef void (^completionBlock)(BOOL);
 		[self setTabBarHidden:hidden animated:animated];
         [self setStatusBarHidden:hidden animated:animated];
 	}
-	else 
-	{
+//	else 
+//	{
 //		[self setSplitViewMasterViewControllerHidden:hidden animated:animated];
-	}
+//	}
 
 	// must be performed after hiding/showing of statusBar
 	[self.navigationController setNavigationBarHidden:hidden animated:animated];
@@ -481,12 +485,8 @@ typedef void (^completionBlock)(BOOL);
 	}
 }
 
-- (CGRect)visibleBlindsRect
-{
-	CGFloat y = 0, h = self.view.frame.size.height;
-//	if (!self.barsHidden)
-//		h -= y = self.navigationController.navigationBar.frame.size.height;
-	return CGRectMake(0, y, self.blindsImageView.frame.size.width, h);
+- (CGRect)visibleBlindsRect {
+	return CGRectMake(0, 0, self.blindsImageView.frame.size.width, self.view.frame.size.height);
 }
 
 #pragma mark - UIViewController life cycle overrides
@@ -542,7 +542,7 @@ typedef void (^completionBlock)(BOOL);
 								 object:nil];
 	}
 
-	if (self.blindsImageView && !self.blindsImageView.hidden && _nestedImageView && self.image)
+	if (self.blindsImageView && !_blindsImageView.isHidden && _nestedImageView && self.image)
 		[self hideBlinds:0.4444];
 }
 
@@ -620,6 +620,13 @@ typedef void (^completionBlock)(BOOL);
 		[self.scrollView setZoomScale:self.scrollView.minimumZoomScale animated:YES];
 	else if (zoomScale > self.scrollView.maximumZoomScale)
 		[self.scrollView setZoomScale:self.scrollView.maximumZoomScale animated:YES];
+
+	if (self.blindsImageView.isHidden)
+	{
+		CGRect hiddenBlindsViewFrame = self.blindsImageView.frame;
+		hiddenBlindsViewFrame.size.height = 0;
+		self.blindsImageView.frame = hiddenBlindsViewFrame;
+	}
 }
 /*
 - (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation 
