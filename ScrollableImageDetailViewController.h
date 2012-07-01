@@ -6,7 +6,6 @@
 
 #include "xolawareOpenSourceCopyright.h"	//  Copyright (c) 2012 xolaware.
 
-#import "KludgeWorkaroundForBuggySplitViewDelegateStartup.h"
 #import "NestedNavigationControllerHandler.h"
 #import "SplitViewTitle.h"
 
