@@ -71,6 +71,7 @@
 
 #pragma mark - 
 
+// called when rotating to portrait
 - (void)splitViewController:(UISplitViewController*)splitController
 	 willHideViewController:(UIViewController*)viewController
 		  withBarButtonItem:(UIBarButtonItem*)barButtonItem
@@ -83,11 +84,11 @@
 			self.startupBarButtionItemWeakReference = barButtonItem;
 }
 
+// called when rotating to landscape, invalidating the button and pre-5.1 popover controller
 - (void)splitViewController:(UISplitViewController*)splitController
 	 willShowViewController:(UIViewController*)viewController
   invalidatingBarButtonItem:(UIBarButtonItem*)barButtonItem
 {
-    // Called when the view is shown again in the split view, invalidating the button and popover controller.
 	if (!barButtonItem.title)
 		barButtonItem.title = self.kludgeWorkaroundMasterViewButtonStartupTitle;
 	[self.navigationItem setLeftBarButtonItem:nil animated:YES];
