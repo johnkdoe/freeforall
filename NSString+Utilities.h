@@ -10,4 +10,5 @@
 
 @interface NSString (Utilities)
 - (BOOL)isNonEmpty;
+- (NSURL*)urlForMainBundleResourceHTML;
 @end
