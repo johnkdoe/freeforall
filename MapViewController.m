@@ -14,8 +14,6 @@
 @property (weak, nonatomic) IBOutlet MKMapView *mapView;
 @property (strong, nonatomic) IBOutlet UISegmentedControl *mapTypeSegmentedControl;
 
-@property (nonatomic) UIStatusBarStyle callerStatusBarStyle;
-
 @end
 
 #pragma mark -
@@ -54,7 +52,6 @@
 
 #pragma mark @synthesize
 @synthesize annotations = _annotations;
-@synthesize callerStatusBarStyle = _callerStatusBarStyle;
 @synthesize delegate = _delegate;
 @synthesize initialLocation = _initialLocation;
 @synthesize mapView = _mapView;
@@ -153,23 +150,15 @@
 									 action:@selector(mapType:)
 						   forControlEvents:UIControlEventValueChanged];
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
-	{
-		UIApplication* app = [UIApplication sharedApplication];
-		self.callerStatusBarStyle = app.statusBarStyle;
-		if (UIStatusBarStyleBlackTranslucent != self.callerStatusBarStyle)
-			[app setStatusBarStyle:UIStatusBarStyleBlackTranslucent animated:animated];
-	}
+		[[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleBlackTranslucent
+													animated:animated];
 }
 
 - (void)viewDidDisappear:(BOOL)animated {
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
-	{
-		UIApplication* app = [UIApplication sharedApplication];
-		if (UIStatusBarStyleBlackTranslucent != self.callerStatusBarStyle)
-			[app setStatusBarStyle:self.callerStatusBarStyle animated:animated];
 		[self.navigationController popToEligibleViewController:self.nestedNavControllerHandler
 													  animated:NO];
-	}
+	[super viewDidDisappear:animated];
 }
 
 - (void)viewDidUnload
