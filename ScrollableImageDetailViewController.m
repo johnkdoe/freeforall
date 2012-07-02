@@ -12,6 +12,7 @@
 
 #import "FlipsideViewController.h"
 
+#import "NSString+Utilities.h"
 #import "UINavigationController+NestedNavigationController.h"
 #import "UISplitViewController+MasterDetailUtilities.h"
 #import "UITabBarController+HideTabBar.h"					// thank you Carlos Oliva
@@ -147,12 +148,16 @@
 	BOOL animate = (BOOL)self.view.window;
 	if (uiApp.isStatusBarHidden && xolawareTelephonyHandler.isInCall)
 	{
+#if DEBUG
 		NSLog(@"calls all calls done");
+#endif
 		[uiApp setStatusBarHidden:NO withAnimation:[self statusBarAnimation:animate]];
 	}
 	else if (!uiApp.isStatusBarHidden && !xolawareTelephonyHandler.isInCall)
 	{
+#if DEBUG
 		NSLog(@"calls exist");
+#endif
 		[uiApp setStatusBarHidden:YES withAnimation:[self statusBarAnimation:animate]];
 	}
 }
@@ -650,7 +655,18 @@ typedef void (^completionBlock)(BOOL);
 	if ([[segue identifier] isEqualToString:@"scrollableImageDetailInfo"])
 	{
 		[segue.destinationViewController setFlipsideViewControllerDelegate:self];
-		[segue.destinationViewController setOriginatingURL:self.originatingURL];
+		NSURL* flipsideURL;
+		if (self.originatingURL)
+		{
+			if ([xolawareReachability connectedToNetwork])
+				flipsideURL = self.originatingURL;
+			else
+				flipsideURL = @"networkDown".urlForMainBundleResourceHTML;
+		}
+		else
+			flipsideURL = @"missingOriginatingURL".urlForMainBundleResourceHTML;
+		[segue.destinationViewController setOriginatingURL:flipsideURL];
+
 		if ([segue respondsToSelector:@selector(popoverController)])
 		{
 			self.flipsidePopoverController = [(id)segue popoverController];
