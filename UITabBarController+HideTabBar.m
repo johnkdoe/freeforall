@@ -42,7 +42,9 @@
 
 	if (!transitionView)
 	{
+#if DEBUG
 		NSLog(@"could not get the container view!");
+#endif
 		return;
 	}
 
