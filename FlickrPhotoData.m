@@ -303,7 +303,9 @@
 	if (image)
 	{
 		[self displayImage:image inController:imageDetailVC];
-		if (!_originatingURL)
+		if (_originatingURL)
+			imageDetailVC.originatingURL = _originatingURL;
+		else
 			dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 				imageDetailVC.originatingURL = self.originatingURL;	// visits web
 			});
