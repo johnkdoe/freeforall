@@ -5,6 +5,7 @@
 #include "xolawareOpenSourceCopyright.h"	//  Copyright (c) 2012 xolaware.
 
 #import "FlipsideViewController.h"
+#import "NSString+Utilities.h"
 
 @interface FlipsideViewController () <UIWebViewDelegate>
 
@@ -81,11 +82,7 @@
 
 		NSURL* url = self.originatingURL;
 		if (!url)
-		{
-			NSString* resPath = [[NSBundle mainBundle] pathForResource:@"index" ofType:@"html"];
-			if (resPath)
-				url = [NSURL fileURLWithPath:resPath];
-		}
+			url = @"index".urlForMainBundleResourceHTML;
 
 		[self.webView loadRequest:[NSURLRequest requestWithURL:url]];
 	}
