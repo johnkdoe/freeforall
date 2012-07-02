@@ -28,28 +28,34 @@
 @implementation FlickrPhotoData
 @synthesize plainPhotoDataDictionary = _plainPhotoDataDictionary;
 @synthesize imageRetrievalError = _imageRetrievalError;
+@synthesize originatingURL = _originatingURL;
 
-- (id)initWithImageRetrievalError:(NSDictionary*)imageRetrievalError {
+- (id)initWithImageRetrievalError:(NSDictionary*)imageRetrievalError 
+				   originatingURL:(NSURL*)originatingURL{
 	self = [self init];
 	if (self)
 	{
 		_imageRetrievalError = imageRetrievalError;
+		_originatingURL = originatingURL;
 	}
 	return self;
 }
 
 + (FlickrPhotoData*)flickrPhotoDataWithDictionary:(NSDictionary*)plainPhotoDataDictionary
 							  imageRetrievalError:(NSDictionary*)imageRetrievalError
+								   originatingURL:(NSURL*)originatingURL
 {
 	FlickrPhotoData* newFlickrPhotoData
-	  = [[FlickrPhotoData alloc] initWithImageRetrievalError:imageRetrievalError];
+	  = [[FlickrPhotoData alloc] initWithImageRetrievalError:imageRetrievalError
+											  originatingURL:originatingURL];
 	newFlickrPhotoData.plainPhotoDataDictionary = plainPhotoDataDictionary;
 	return newFlickrPhotoData;	
 }
 
 + (FlickrPhotoData*)flickrPhotoDataWithDictionary:(NSDictionary*)plainPhotoDataDictionary {
 	return [FlickrPhotoData flickrPhotoDataWithDictionary:plainPhotoDataDictionary
-									  imageRetrievalError:nil];
+									  imageRetrievalError:nil
+										   originatingURL:nil];
 }
 
 + (FlickrPhotoData*)flickrPhotoDataWithObjects:(NSArray*)objects forKeys:(NSArray*)keys {
@@ -65,8 +71,10 @@
 		if (nestedPlainPhoto)
 		{
 			NSDictionary* imageRetrievalDict = [plainPhoto objectForKey:@"imageRetrievalError"];
+			NSURL* oURLDict = [NSURL URLWithString:[plainPhoto objectForKey:@"originatingURL"]];
 			[wrapperArray addObject:[self flickrPhotoDataWithDictionary:nestedPlainPhoto
-													imageRetrievalError:imageRetrievalDict]];
+													imageRetrievalError:imageRetrievalDict
+														 originatingURL:oURLDict]];
 		}
 		else
 			[wrapperArray addObject:[self flickrPhotoDataWithDictionary:plainPhoto]];
@@ -78,13 +86,33 @@
 	NSMutableArray* defaultsDicts = [NSMutableArray arrayWithCapacity:flickrPhotoArray.count];
 	for (FlickrPhotoData* flickrPhoto in flickrPhotoArray)
 	{
-		NSDictionary* userDefaultsWritable
-		  = [NSDictionary dictionaryWithObjectsAndKeys:flickrPhoto.plainPhotoDataDictionary,
-																	@"plainPhotoDataDictionary",
-													   flickrPhoto.imageRetrievalError, 
-																	@"imageRetrievalError", 
-													   nil];
-		[defaultsDicts addObject:userDefaultsWritable];
+		NSMutableArray* defaultsObjs = [NSMutableArray arrayWithCapacity:3];
+		NSMutableArray* defaultsKeys = [NSMutableArray arrayWithCapacity:3];
+		if (flickrPhoto.plainPhotoDataDictionary)
+		{
+			[defaultsObjs addObject:flickrPhoto.plainPhotoDataDictionary];
+			[defaultsKeys addObject:@"plainPhotoDataDictionary"];
+		}
+#if DEBUG
+		else
+			assert(flickrPhoto.plainPhotoDataDictionary);
+#endif
+
+		if (flickrPhoto.imageRetrievalError)
+		{
+			[defaultsObjs addObject:flickrPhoto.imageRetrievalError];
+			[defaultsKeys addObject:@"imageRetrievalError"];
+		}
+
+		if (flickrPhoto.originatingURL)
+		{
+			[defaultsObjs addObject:flickrPhoto.originatingURL.absoluteString];
+			[defaultsKeys addObject:@"originatingURL"];
+		}
+
+		NSDictionary* writableDefaults
+		  = [NSDictionary dictionaryWithObjects:defaultsObjs forKeys:defaultsKeys];
+		[defaultsDicts addObject:writableDefaults];
 	}
 	return defaultsDicts.copy;
 }
@@ -187,7 +215,9 @@
 }
 
 - (NSURL*)originatingURL {
-	return [FlickrRestAPI urlForThumbnailAttributionForPhoto:self];
+	if (!_originatingURL && [xolawareReachability connectedToNetwork])
+		_originatingURL = [FlickrRestAPI urlForThumbnailAttributionForPhoto:self];
+	return _originatingURL;
 }
 
 - (BOOL)hasImageRetrievalError {
@@ -261,8 +291,6 @@
 	if (![title isNonEmpty])
 		title = NSLocalizedString(@"…unknown title…", nil);
 	imageDetailVC.imageTitle = title;
-	imageDetailVC.originatingURL = self.originatingURL;
-	
 	imageDetailVC.image = image;
 	[VoyeurRecentlyViewed setVisited:self];	
 }
@@ -275,11 +303,14 @@
 	if (image)
 	{
 		[self displayImage:image inController:imageDetailVC];
+		if (!_originatingURL)
+			dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+				imageDetailVC.originatingURL = self.originatingURL;	// visits web
+			});
 	}
 	else if ([xolawareReachability connectedToNetwork])
 	{
-		dispatch_queue_t q = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-		dispatch_async(q, ^{
+		dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 			UIImage* retrievedImage = [self retrieveNetworkImageWithFormat:@"Large"];
 			if (retrievedImage)
 			{
@@ -289,9 +320,9 @@
 					[self displayImage:retrievedImage inController:imageDetailVC];
 				});
 			}
+			imageDetailVC.originatingURL = self.originatingURL;	// visits web
 		});
 	}
-	
 }
 
 @end
