@@ -20,4 +20,6 @@
 
 - (BOOL)isEqual:(id)object;
 
+- (void)normalizeFontSizeUsingCellAccessoryType:(UITableViewCellAccessoryType)reusedType;
+
 @end
