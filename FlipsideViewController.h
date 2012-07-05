@@ -14,6 +14,7 @@
 - (void)flipsideViewControllerDidFinish:(FlipsideViewController*)controller;
 @optional
 @property (nonatomic) BOOL scrollsToTop;
+- (void)flipsideViewControllerWillPop:(FlipsideViewController*)controller;
 @end
 
 @interface FlipsideViewController : UIViewController
