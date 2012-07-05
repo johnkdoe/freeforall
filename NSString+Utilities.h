@@ -8,6 +8,10 @@
 
 #import <Foundation/Foundation.h>
 
+#define synthesizeLazyLocalizedString(prop, val) \
+@synthesize prop = _##prop; \
+- (NSString*)prop { if (!_##prop) _##prop = NSLocalizedString(val, nil); return _##prop; }
+
 @interface NSString (Utilities)
 - (BOOL)isNonEmpty;
 - (NSURL*)urlForMainBundleResourceHTML;
