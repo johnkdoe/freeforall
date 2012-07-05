@@ -34,12 +34,14 @@
 @synthesize flipsideNavigationItem;
 @synthesize webView;
 
+#if __IPHONE_OS_VERSION_MIN_REQUIRED <= __IPHONE_4_3
 - (UITapGestureRecognizer*)tapRecognizer {
 	if (!_tapRecognizer)
 		_tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self 
 																 action:@selector(done:)];
 	return _tapRecognizer;
 }
+#endif
 
 #pragma mark - UIViewController life cycle overrides
 #pragma @optional
@@ -50,12 +52,11 @@
 
 	// cover both bases in case the flipside segue is normal navigation
 	// or modal with its own navigationItem
-	self.flipsideNavigationItem.title = self.title = NSLocalizedString(self.title, nil);
+	if (self.flipsideNavigationItem)
+		self.title = NSLocalizedString(self.flipsideNavigationItem.title, nil);
+	else
+		self.title = NSLocalizedString(self.title, nil);
 
-	// if this controller is modal and there's not a webView, then allow a tap anywhere on
-	// the page to be recognozed as a way out
-	if (self.modalViewController && !self.webView)
-		[self.view addGestureRecognizer:self.tapRecognizer];	// tapRecognizer auto-generated
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -88,6 +89,19 @@
 	}
 }
 
+#if __IPHONE_OS_VERSION_MIN_REQUIRED <= __IPHONE_4_3
+- (void)viewDidAppear:(BOOL)animated {
+	// if building for __IPHONE_5_0+, the gesture-recognizer will be in the storyboard 
+	// and thus added when loaded, done.
+	// for iPad, we're undoubtedly in a popover, so skip this
+	if (!self.webView  // && !self.popoverController)	// unfortunately, can't test for this!
+		&& UIUserInterfaceIdiomPhone == [[UIDevice currentDevice] userInterfaceIdiom])
+	{
+		[self.view addGestureRecognizer:self.tapRecognizer];	// tapRecognizer lazy-generated
+	}
+}
+#endif	
+
 - (void)viewWillDisappear:(BOOL)animated
 {
 	// necessary to do this here, because done may be skipped if the user taps on
@@ -99,18 +113,23 @@
 		self.flipsideViewControllerDelegate.scrollsToTop = YES;
 		_delegateScrollsToTop = NO;
 	}
+	SEL flipsideViewControllerWillPop = @selector(flipsideViewControllerWillPop:);
+	if ([self.flipsideViewControllerDelegate respondsToSelector:flipsideViewControllerWillPop])
+		[self.flipsideViewControllerDelegate flipsideViewControllerWillPop:self];
+
+	// ??? … not entirely certain the following is necessary …
+	if (_tapRecognizer)
+	{
+		[self.view removeGestureRecognizer:_tapRecognizer];
+		[self setTapRecognizer:nil];	// automatically generated
+	}
 
 	[super viewWillDisappear:animated];
 }
 
 - (void)viewDidUnload
 {
-	if (_tapRecognizer)
-	{
-		[self.view removeGestureRecognizer:_tapRecognizer];
-		[self setTapRecognizer:nil];	// automatically generated
-	}
-#if __IPHONE_OS_VERSION_MIN_REQUIRED < __IPHONE_5_0
+#if __IPHONE_OS_VERSION_MIN_REQUIRED <= __IPHONE_4_3
 	[self setOriginatingURL:nil];	// automatically generated
 	[self setFlipsideViewControllerDelegate:nil];	// automatically generated
 #endif
