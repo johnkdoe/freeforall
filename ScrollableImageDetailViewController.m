@@ -495,7 +495,8 @@ typedef void (^completionBlock)(BOOL);
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	_titleForNoImage = self.title = NSLocalizedString(self.title, nil);
+	_titleForNoImage = self.title
+	  = [[[NSBundle mainBundle] localizedInfoDictionary] objectForKey:@"CFBundleDisplayName"];
 	self.scrollView.delegate = self;
 	if (self.image)						// in iPhone segue, image will get set before load
 		[self nestImageInScrollView];
