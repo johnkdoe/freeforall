@@ -56,7 +56,7 @@
 		self.title = NSLocalizedString(self.flipsideNavigationItem.title, nil);
 	else
 		self.title = NSLocalizedString(self.title, nil);
-
+	self.flipsideNavigationItem.title = self.title;
 }
 
 - (void)viewWillAppear:(BOOL)animated
