@@ -69,16 +69,25 @@
 	{
 		self.webView.delegate = self;		// to enable fwd button in webViewDidFinishLoad:
 
+#if __IPHONE_OS_VERSION_MIN_REQUIRED > __IPHONE_4_3
+		UIScrollView* webScrollView = self.webView.scrollView;
+#else
+		BOOL iOS5plus = [self.webView respondsToSelector:@selector(scrollView)];
+		UIScrollView* webScrollView
+		  = iOS5plus ? self.webView.scrollView : (id)[self.webView.subviews objectAtIndex:0];
+		assert([webScrollView isKindOfClass:[UIScrollView class]]);
+		if (!iOS5plus)
+			self.webView.backgroundColor = self.view.backgroundColor;	// glitch in iOS 4.x
+#endif
 		// allow a little zooming, since the pages come up really small on iPhone
-		self.webView.scalesPageToFit = YES;
-		self.webView.scrollView.minimumZoomScale = 0.25;
-		self.webView.scrollView.maximumZoomScale = 1.75;
+		webScrollView.minimumZoomScale = 0.25;
+		webScrollView.maximumZoomScale = 1.75;
 		if ([self.flipsideViewControllerDelegate respondsToSelector:@selector(setScrollsToTop:)]
 			&& [self.flipsideViewControllerDelegate respondsToSelector:@selector(scrollsToTop)]
 			&& (_delegateScrollsToTop = self.flipsideViewControllerDelegate.scrollsToTop))
 		{
 			self.flipsideViewControllerDelegate.scrollsToTop = NO;
-			self.webView.scrollView.scrollsToTop = YES;			
+			webScrollView.scrollsToTop = YES;			
 		}
 
 		NSURL* url = self.originatingURL;
@@ -93,8 +102,8 @@
 - (void)viewDidAppear:(BOOL)animated {
 	// if building for __IPHONE_5_0+, the gesture-recognizer will be in the storyboard 
 	// and thus added when loaded, done.
-	// for iPad, we're undoubtedly in a popover, so skip this
-	if (!self.webView  // && !self.popoverController)	// unfortunately, can't test for this!
+	// for iPad, we're undoubtedly in a popover, so skip this, done.
+	if (!(self.webView && self.webView.userInteractionEnabled)
 		&& UIUserInterfaceIdiomPhone == [[UIDevice currentDevice] userInterfaceIdiom])
 	{
 		[self.view addGestureRecognizer:self.tapRecognizer];	// tapRecognizer lazy-generated
@@ -109,7 +118,15 @@
 	if ([self.flipsideViewControllerDelegate respondsToSelector:@selector(setScrollsToTop:)]
 		&& _delegateScrollsToTop)
 	{
-		self.webView.scrollView.scrollsToTop = NO;
+#if __IPHONE_OS_VERSION_MIN_REQUIRED > __IPHONE_4_3
+		UIScrollView* webScrollView = self.webView.scrollView;
+#else
+		BOOL iOS5plus = [self.webView respondsToSelector:@selector(scrollView)];
+		UIScrollView* webScrollView
+		  = iOS5plus ? self.webView.scrollView : (id)[self.webView.subviews objectAtIndex:0];
+		assert([webScrollView isKindOfClass:[UIScrollView class]]);
+#endif
+		webScrollView.scrollsToTop = NO;
 		self.flipsideViewControllerDelegate.scrollsToTop = YES;
 		_delegateScrollsToTop = NO;
 	}
