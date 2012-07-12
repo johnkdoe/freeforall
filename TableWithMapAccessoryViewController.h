@@ -6,6 +6,7 @@
 
 #include "xolawareOpenSourceCopyright.h"	//  Copyright (c) 2012 xolaware.
 
+#import <UIKit/UIKit.h>
 #import "FlipsideViewController.h"
 #import "SecondaryQueuePhotoReceiver.h"
 
