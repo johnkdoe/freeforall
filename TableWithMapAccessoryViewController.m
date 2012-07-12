@@ -11,12 +11,14 @@
 #import "UISplitViewController+MasterDetailUtilities.h"
 #import "xolawareReachability.h"
 
-#import "FlipsideViewController.h"
 #import "MapViewController.h"
 #import "SplitViewTitle.h"
 
 @interface TableWithMapAccessoryViewController ()
-	<UITableViewDataSource, UITableViewDelegate, MapViewControllerDelegate>
+	<UIPopoverControllerDelegate, UITableViewDataSource, UITableViewDelegate,
+	 MapViewControllerDelegate>
+
+@property (strong, nonatomic) UIPopoverController *flipsidePopoverController;
 
 @end
 
@@ -26,6 +28,8 @@
 @synthesize objects = _objects;
 @synthesize retrievalDate = _retrievalDate;
 @synthesize systemLocaleFormatter = _systemLocaleFormatter;
+
+@synthesize flipsidePopoverController = _flipsidePopoverController;
 
 #pragma mark - syntheisize overrides
 
@@ -124,6 +128,31 @@
 	return YES;
 }
 
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+	if ([[segue identifier] isEqualToString:@"tableViewInfo"])
+	{
+		// can't navigate away from this modal via tab, so no need to worry about nesting
+		[segue.destinationViewController setFlipsideViewControllerDelegate:self];
+		if ([segue respondsToSelector:@selector(popoverController)])
+		{
+			self.flipsidePopoverController = [(id)segue popoverController];
+			self.flipsidePopoverController.delegate = self;
+		}
+		if (UIUserInterfaceIdiomPad == [[UIDevice currentDevice] userInterfaceIdiom])
+			self.navigationItem.rightBarButtonItem.enabled = NO;		
+	}
+
+}
+
+#pragma mark - UIPopoverControllerDelegate protocol implementation
+
+- (void)popoverControllerDidDismissPopover:(UIPopoverController*)popoverController
+{
+	self.navigationItem.rightBarButtonItem.enabled = YES;
+	self.flipsidePopoverController = nil;
+}
+
 #pragma mark - UITableViewDataSource 
 
 #pragma mark @required	// see subclasses for full protocol implementors
@@ -173,7 +202,7 @@
 {
 	if ([xolawareReachability connectedToNetwork])
 	{
-		if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad)
+		if (UIUserInterfaceIdiomPad == [[UIDevice currentDevice] userInterfaceIdiom])
 		{
 			MapViewController* mapVC
 			  = [[MapViewController alloc] initWithNibName:@"MapViewController" bundle:nil];
@@ -205,8 +234,16 @@
 }
 
 - (void)flipsideViewControllerDidFinish:(FlipsideViewController*)controller {
-    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
-        [self dismissModalViewControllerAnimated:YES];		
+    if (UIUserInterfaceIdiomPhone == [[UIDevice currentDevice] userInterfaceIdiom])
+	{
+        [self dismissModalViewControllerAnimated:YES];
+    }
+	else
+	{
+		self.navigationItem.rightBarButtonItem.enabled = YES;	// turn info button back on
+        [self.flipsidePopoverController dismissPopoverAnimated:YES];
+        self.flipsidePopoverController = nil;
+    }
 }
 
 #pragma mark - SecondaryQueuePhotoReceiver implementation
