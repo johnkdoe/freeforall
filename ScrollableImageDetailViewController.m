@@ -83,7 +83,7 @@
 		[self setBarsHidden:NO animated:NO];
 	_image = uiImage;
 	if (!_image)
-		self.title = self.titleForNoImage;
+		self.navigationItem.title = self.titleForNoImage;
 	self.navigationItem.rightBarButtonItem.enabled = _image ? YES : NO;
 	if (self.scrollView)			// this method can be invoked before viewDidLoad on iPhone
 		[self nestImageInScrollView];
@@ -123,8 +123,8 @@
 #pragma mark - ScrollableImageDetailViewController public implementation
 
 - (void)setImageTitle:(NSString*)imageTitle {
-	// setting self.navigationItem.title here causes self.title to change!
-	self.title = imageTitle;
+	// setting self.title here occurs too early for phone.
+	self.navigationItem.title = imageTitle;
 }
 
 #pragma mark - ScrollableImageDetailViewController private implementation
@@ -496,19 +496,21 @@ typedef void (^completionBlock)(BOOL);
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	_titleForNoImage = self.title
+	_titleForNoImage
 	  = [[[NSBundle mainBundle] localizedInfoDictionary] objectForKey:@"CFBundleDisplayName"];
 	self.scrollView.delegate = self;
 	if (self.image)						// in iPhone segue, image will get set before load
 		[self nestImageInScrollView];
 	[self establishGestureDependencies];
 
-	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad)
+	if (UIUserInterfaceIdiomPad == [[UIDevice currentDevice] userInterfaceIdiom])
 	{
+		self.title = _titleForNoImage;
 		[self resetSplitViewBarButtonTitle];
 	}
 	else
 	{
+		self.title = self.navigationItem.title;
 		[self.navigationController.navigationBar
 			setTitleVerticalPositionAdjustment:-2.0 forBarMetrics:UIBarMetricsDefault];
 		[self.navigationController.navigationBar
