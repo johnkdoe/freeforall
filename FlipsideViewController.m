@@ -140,7 +140,8 @@
 		[self.view removeGestureRecognizer:_tapRecognizer];
 		[self setTapRecognizer:nil];	// automatically generated
 	}
-
+	[UIView animateWithDuration:0.5 delay:0 options:UIViewAnimationCurveEaseIn
+					 animations:^{ self.view.alpha = 0.0; } completion:nil];
 	[super viewWillDisappear:animated];
 }
 
