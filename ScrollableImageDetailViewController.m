@@ -84,6 +84,7 @@
 	_image = uiImage;
 	if (!_image)
 		self.title = self.titleForNoImage;
+	self.navigationItem.rightBarButtonItem.enabled = _image ? YES : NO;
 	if (self.scrollView)			// this method can be invoked before viewDidLoad on iPhone
 		[self nestImageInScrollView];
 }
@@ -651,7 +652,7 @@ typedef void (^completionBlock)(BOOL);
 			else
 				flipsideURL = @"networkDown".urlForMainBundleResourceHTML;
 		}
-		else
+		else if (self.image)
 			flipsideURL = @"missingOriginatingURL".urlForMainBundleResourceHTML;
 		[segue.destinationViewController setOriginatingURL:flipsideURL];
 
@@ -660,7 +661,7 @@ typedef void (^completionBlock)(BOOL);
 			self.flipsidePopoverController = [(id)segue popoverController];
 			self.flipsidePopoverController.delegate = self;
 		}
-		if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad)
+		if (UIUserInterfaceIdiomPad == [[UIDevice currentDevice] userInterfaceIdiom])
 			self.navigationItem.rightBarButtonItem.enabled = NO;
 	}
 }
@@ -754,7 +755,7 @@ typedef void (^completionBlock)(BOOL);
 
 - (void)flipsideViewControllerDidFinish:(FlipsideViewController*)controller
 {
-    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) 
+    if (UIUserInterfaceIdiomPhone == [[UIDevice currentDevice] userInterfaceIdiom])
 	{
         [self dismissModalViewControllerAnimated:YES];
     }
