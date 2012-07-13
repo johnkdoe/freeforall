@@ -94,35 +94,55 @@
 + (NSDictionary*)query:(NSString *)query
 {
 	// prep as much as possible before doing the backgroundTaskWithExpirationHandler thing
-	NSURL* fullRequestURL = [self fullQueryURL:query];
-	xolawareBackgroundTaskBlock jsonDataRetrieval = ^id
+	NSURLRequest* urlRequest
+	  = [[NSURLRequest alloc] initWithURL:[self fullQueryURL:query]
+							  cachePolicy:NSURLCacheStorageAllowedInMemoryOnly
+						  timeoutInterval:15];	// sort of a long timeout; may adjust later
+	xolawareBackgroundTaskBlock simpleDataRetrieval = ^id
 	{
 		NSError* error;
-		id result = [[NSString stringWithContentsOfURL:fullRequestURL
-											  encoding:NSUTF8StringEncoding
-												 error:&error]
-					 dataUsingEncoding:NSUTF8StringEncoding];
+		NSURLResponse* urlResponse;
 #if DEBUG
-		if (error)
-			NSLog(@"REST/json: %@", error);
+//		NSLog(@"starting request");
 #endif
-		return result;
+		id data = [NSURLConnection sendSynchronousRequest:urlRequest
+										returningResponse:&urlResponse
+													error:&error];
+		if (error)
+			if (NSURLErrorTimedOut == error.code)
+				// eventually put this in a mini-alert of some sort
+				NSLog(@"%@ URL = %@", error.localizedDescription,
+					  [error.userInfo objectForKey:NSURLErrorFailingURLStringErrorKey]);
+			else if (NSURLErrorNotConnectedToInternet == error.code)
+				// eventually put this in a mini-alert of some sort
+				NSLog(@"%@ URL = %@", error.localizedDescription,
+					  [error.userInfo objectForKey:NSURLErrorFailingURLStringErrorKey]);
+			else if (NSURLErrorNetworkConnectionLost == error.code)
+				// eventually put this in a mini-alert of some sort
+				NSLog(@"%@ URL = %@", error.localizedDescription,
+					  [error.userInfo objectForKey:NSURLErrorFailingURLStringErrorKey]);
+#if DEBUG
+			else
+				NSLog(@"REST/json: %@", error);
+//		NSLog(@"request complete");
+		if (!data)
+			NSLog(@"network data retrieval: no data");
+#endif
+		return data;
 	};
 
-	// xolawareBackground just means this task will continue running if the app goes background
-	id jsonData = [[xolawareBackground retriever:jsonDataRetrieval] getData];
-	return jsonData ? [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:nil]
-					: nil;
+	// xolawareBackground retriever allows the request results to be accepted in the background,
+	// and then will pause; the return and processing of data will occur in the foreground.
+	id rawData = [[xolawareBackground retriever:simpleDataRetrieval] getData];
+	return rawData ? [NSJSONSerialization JSONObjectWithData:rawData options:0 error:nil] : nil;
 }
 
 + (NSArray*)flickrPhotosQuery:(NSString*)request {
-	id apiPhotos = [[self query:request] valueForKeyPath:API_PHOTOS];
-	return [FlickrPhotoData flickrPhotoArray:apiPhotos];
+	return [FlickrPhotoData flickrPhotoArray:[[self query:request] valueForKeyPath:API_PHOTOS]];
 }
 
 + (NSDictionary*)readableParts:(NSDictionary*)place
 {
-	
 	NSString* request
 	  = [API_REST_QUERY stringByAppendingFormat:API_PLACE_ARGS_FORMAT,
 												[place valueForKey:FLICKR_API_PLACE_ID]];
