@@ -8,6 +8,11 @@
 #import "NSString+Utilities.h"
 
 @interface FlipsideViewController () <UIWebViewDelegate>
+#if __IPHONE_OS_VERSION_MIN_REQUIRED <= __IPHONE_4_3
+{
+	UIInterfaceOrientation originalOrientation;
+}
+#endif
 
 @property (nonatomic) int backCount;
 @property (nonatomic) BOOL delegateScrollsToTop;
@@ -72,6 +77,7 @@
 #if __IPHONE_OS_VERSION_MIN_REQUIRED > __IPHONE_4_3
 		UIScrollView* webScrollView = self.webView.scrollView;
 #else
+		originalOrientation = [[UIDevice currentDevice] orientation];
 		BOOL iOS5plus = [self.webView respondsToSelector:@selector(scrollView)];
 		UIScrollView* webScrollView
 		  = iOS5plus ? self.webView.scrollView : (id)[self.webView.subviews objectAtIndex:0];
@@ -96,17 +102,24 @@
 
 		[self.webView loadRequest:[NSURLRequest requestWithURL:url]];
 	}
+	if (animated && UIUserInterfaceIdiomPhone == [[UIDevice currentDevice] userInterfaceIdiom])
+	{
+		self.view.alpha = 0;
+		[UIView animateWithDuration:0.5 delay:0 options:UIViewAnimationCurveEaseInOut
+						 animations:^{ self.view.alpha = 1; } completion:nil];
+	}
 }
 
 #if __IPHONE_OS_VERSION_MIN_REQUIRED <= __IPHONE_4_3
 - (void)viewDidAppear:(BOOL)animated {
-	// if building for __IPHONE_5_0+, the gesture-recognizer will be in the storyboard 
-	// and thus added when loaded, done.
-	// for iPad, we're undoubtedly in a popover, so skip this, done.
-	if (!(self.webView && self.webView.userInteractionEnabled)
-		&& UIUserInterfaceIdiomPhone == [[UIDevice currentDevice] userInterfaceIdiom])
+	[super viewDidAppear:animated];
+	if (UIUserInterfaceIdiomPhone == [[UIDevice currentDevice] userInterfaceIdiom])
 	{
-		[self.view addGestureRecognizer:self.tapRecognizer];	// tapRecognizer lazy-generated
+		// if building for __IPHONE_5_0+, the gesture-recognizer will be in the storyboard 
+		// and thus added when loaded, done.
+		// for iPad, we're undoubtedly in a popover, so skip this, done.
+		if (!(self.webView && self.webView.userInteractionEnabled))
+			[self.view addGestureRecognizer:self.tapRecognizer]; // tapRecognizer lazy-generated
 	}
 }
 #endif	
@@ -140,8 +153,9 @@
 		[self.view removeGestureRecognizer:_tapRecognizer];
 		[self setTapRecognizer:nil];	// automatically generated
 	}
-	[UIView animateWithDuration:0.5 delay:0 options:UIViewAnimationCurveEaseIn
-					 animations:^{ self.view.alpha = 0.0; } completion:nil];
+	if (animated && UIUserInterfaceIdiomPhone == [[UIDevice currentDevice] userInterfaceIdiom])
+		[UIView animateWithDuration:0.5 delay:0 options:UIViewAnimationCurveEaseIn
+						 animations:^{ self.view.alpha = 0; } completion:nil];
 	[super viewWillDisappear:animated];
 }
 
@@ -155,6 +169,15 @@
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
+#if __IPHONE_OS_VERSION_MIN_REQUIRED <= __IPHONE_4_3
+	// it would seem there's a bug in iOS 4.x and before whereby the old webView internal
+	// scrollView will rotate its contents, even in a modal view.  to prevent that (and thus
+	// to allow our help HTML to be displayed "full-screen" as desired), simply disallow the
+	// view from being rotated from anything but the orientation at startup
+	if (UIUserInterfaceIdiomPhone == [[UIDevice currentDevice] userInterfaceIdiom]
+		&& ![self.webView respondsToSelector:@selector(scrollView)])
+		return originalOrientation ? originalOrientation == interfaceOrientation : YES;
+#endif
 	return YES;
 }
 
