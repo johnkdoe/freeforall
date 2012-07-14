@@ -12,13 +12,15 @@
 
 @class MapViewController;
 
-@interface TableWithMapAccessoryViewController
-	: UITableViewController <FlipsideViewControllerDelegate, SecondaryQueuePhotoReceiver>
+@interface TableWithMapAccessoryViewController : UITableViewController
+	<UIAlertViewDelegate, FlipsideViewControllerDelegate, SecondaryQueuePhotoReceiver>
 
 @property (strong, nonatomic) NSArray* objects;
 @property (strong, nonatomic) NSDate* retrievalDate;
 @property (readonly, strong, nonatomic) NSDateFormatter* systemLocaleFormatter;
 @property (nonatomic) BOOL scrollsToTop;
+
+@property (strong, nonatomic) UIAlertView* alertView;
 
 - (BOOL)annotateMap:(MapViewController*)mapVC forRowAtIndexPath:(NSIndexPath*)indexPath;
 

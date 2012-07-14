@@ -124,7 +124,7 @@
 
 - (void)setImageTitle:(NSString*)imageTitle {
 	// setting self.title here occurs too early for phone.
-	self.navigationItem.title = imageTitle;
+	self.navigationItem.title = NSLocalizedString(imageTitle, nil);
 }
 
 #pragma mark - ScrollableImageDetailViewController private implementation
