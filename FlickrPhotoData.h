@@ -8,6 +8,9 @@
 
 #import <Foundation/Foundation.h>
 
+#define FLICKR_UNKNOWN_TITLE @"…unknown title…"
+#define FLICKR_UNKNOWN_DESCRIPTION @"…unknown description…"
+
 @class ScrollableImageDetailViewController;
 
 @interface FlickrPhotoData : NSObject

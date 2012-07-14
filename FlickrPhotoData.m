@@ -134,11 +134,11 @@
 	  = [_plainPhotoDataDictionary valueForKeyPath:FLICKR_API_PHOTO_DESCRIPTION];
 	
 	// if photo has no title, use its description as title
-	// if it has no description, use the cell default "…unknown title…" as title
+	// if it has no description, use the cell default FLICKR_UNKNOWN_TITLE as title
 	if (![title isNonEmpty])
 		title = descriptionContent;
 	if (![title isNonEmpty])
-		title = NSLocalizedString(@"…unknown title…", nil);
+		title = FLICKR_UNKNOWN_TITLE;	// localize when setting the text in the cell
 	
 	return title;
 }
@@ -150,7 +150,7 @@
 	= [_plainPhotoDataDictionary valueForKeyPath:FLICKR_API_PHOTO_DESCRIPTION];
 	
 	// if photo has no title, use its description as title
-	// if it has no description, use the cell default "…unknown title…" as title
+	// if it has no description, use FLICKR_UNKNOWN_TITLE & FLICKR_UNKNOWN_DESCRIPTION
 	if (![title isNonEmpty])
 	{
 		title = descriptionContent;
@@ -177,7 +177,7 @@
 		}
 	}
 	else
-		descriptionContent = NSLocalizedString(@"…unknown description…", nil);
+		descriptionContent = FLICKR_UNKNOWN_DESCRIPTION;	// localize when getting the cell
 	
 	return descriptionContent;
 }
@@ -289,7 +289,8 @@
 {
 	NSString* title = self.title;
 	if (![title isNonEmpty])
-		title = NSLocalizedString(@"…unknown title…", nil);
+		// TBD … should probably localize in ScrollableImageDetailViewController
+		title = FLICKR_UNKNOWN_TITLE;
 	imageDetailVC.imageTitle = title;
 	imageDetailVC.image = image;
 	[VoyeurRecentlyViewed setVisited:self];	
