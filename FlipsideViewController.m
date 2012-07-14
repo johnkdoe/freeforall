@@ -19,6 +19,8 @@
 
 @property (strong, nonatomic) IBOutlet UITapGestureRecognizer *tapRecognizer;
 
+@property (strong, nonatomic) NSString* unlocalizedTitle;
+
 #if __IPHONE_OS_VERSION_MIN_REQUIRED > __IPHONE_4_3
 @property (readonly, weak, nonatomic) IBOutlet UINavigationItem *flipsideNavigationItem;
 @property (readonly, weak, nonatomic) IBOutlet UIWebView *webView;
@@ -32,6 +34,8 @@
 
 @synthesize flipsideViewControllerDelegate = _flipsideViewControllerDelegate;
 @synthesize originatingURL = _originatingURL;
+
+@synthesize unlocalizedTitle;
 
 @synthesize backCount = _backCount;
 @synthesize delegateScrollsToTop = _delegateScrollsToTop;
@@ -58,15 +62,15 @@
 	// cover both bases in case the flipside segue is normal navigation
 	// or modal with its own navigationItem
 	if (self.flipsideNavigationItem)
-		self.title = NSLocalizedString(self.flipsideNavigationItem.title, nil);
+		self.unlocalizedTitle = self.flipsideNavigationItem.title;
 	else
-		self.title = NSLocalizedString(self.title, nil);
-	self.flipsideNavigationItem.title = self.title;
+		self.unlocalizedTitle = self.title;
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
 	[super viewWillAppear:animated];
+	self.flipsideNavigationItem.title = NSLocalizedString(self.unlocalizedTitle, nil);
 			 
 	// could have lived with self.webView being nil in all message passing below,
 	// but why go through the trouble of looking up the URL, etc, if no webView exists
