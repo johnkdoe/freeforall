@@ -51,12 +51,13 @@
 					<object class="IBUISegmentedControl" id="454340684">
 						<reference key="NSNextResponder" ref="582686473"/>
 						<int key="NSvFlags">265</int>
-						<string key="NSFrame">{{159, 333}, {156, 30}}</string>
+						<string key="NSFrame">{{117, 333}, {198, 30}}</string>
 						<reference key="NSSuperview" ref="582686473"/>
 						<reference key="NSWindow"/>
+						<reference key="NSNextKeyView"/>
 						<string key="NSReuseIdentifierKey">_NS:9</string>
 						<bool key="IBUIOpaque">NO</bool>
-						<float key="IBUIAlpha">0.75</float>
+						<float key="IBUIAlpha">0.83329999446868896</float>
 						<string key="targetRuntimeIdentifier">IBIPadFramework</string>
 						<int key="IBSegmentControlStyle">2</int>
 						<int key="IBNumberOfSegments">3</int>

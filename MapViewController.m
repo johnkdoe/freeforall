@@ -46,8 +46,6 @@
 }
 @end
 
-#pragma mark -
-
 @implementation MapViewController
 
 #pragma mark @synthesize
@@ -76,6 +74,23 @@
 }
 
 #pragma mark // MapViewController private implementation
+
+#pragma mark 
+
+- (NSString*)localizedMapLabel {
+	return NSLocalizedStringFromTable([self.mapTypeSegmentedControl titleForSegmentAtIndex:0],
+									  @"MapViewController", nil);
+}
+
+- (NSString*)localizedSatelliteLabel {
+	return NSLocalizedStringFromTable([self.mapTypeSegmentedControl titleForSegmentAtIndex:1],
+									  @"MapViewController", nil);;
+}
+
+- (NSString*)localizedHybridLabel {
+	return NSLocalizedStringFromTable([self.mapTypeSegmentedControl titleForSegmentAtIndex:2],
+									  @"MapViewController", nil);;
+}
 
 - (MKCoordinateRegion)coordinateRegionCrossingInternationalDateLine
 {
@@ -149,6 +164,9 @@
 	[self.mapTypeSegmentedControl addTarget:self
 									 action:@selector(mapType:)
 						   forControlEvents:UIControlEventValueChanged];
+	[self.mapTypeSegmentedControl setTitle:self.localizedMapLabel		forSegmentAtIndex:0];
+	[self.mapTypeSegmentedControl setTitle:self.localizedSatelliteLabel	forSegmentAtIndex:1];
+	[self.mapTypeSegmentedControl setTitle:self.localizedHybridLabel	forSegmentAtIndex:2];
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
 		[[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleBlackTranslucent
 													animated:animated];
@@ -181,8 +199,7 @@
 	}
 }
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
     return YES;
 }
 
