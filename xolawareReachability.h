@@ -88,7 +88,7 @@ typedef enum {
 	SCNetworkReachabilityRef reachabilityRef;
 }
 
-+ (void)alertNetworkUnavailable;
++ (UIAlertView*)alertNetworkUnavailable:(id<UIAlertViewDelegate>)delegate;
 + (BOOL)connectedToNetwork;
 
 //reachabilityWithHostName- Use to check the reachability of a particular host name. 

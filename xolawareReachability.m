@@ -153,17 +153,16 @@ static void ReachabilityCallback(SCNetworkReachabilityRef target,
 	[super dealloc];
 }
 
-+ (void)alertNetworkUnavailable {
-	static UIAlertView* _alertView;
-	if (!_alertView)
-		_alertView
-		  = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"network unavailable", nil)
-									   message:NSLocalizedString(@"unable to connect", nil)
-									  delegate:nil 
-							 cancelButtonTitle:NSLocalizedString(@"try later", nil)
-							 otherButtonTitles:nil];
++ (UIAlertView*)alertNetworkUnavailable:(id<UIAlertViewDelegate>)delegate {
+	UIAlertView* _alertView
+	  = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"network unavailable", nil)
+								   message:NSLocalizedString(@"unable to connect", nil)
+								  delegate:delegate
+						 cancelButtonTitle:NSLocalizedString(@"try later", nil)
+						 otherButtonTitles:nil];
 
 	[_alertView show];
+	return _alertView;
 }
 
 + (xolawareReachability*)reachabilityWithHostName:(NSString*)hostName;
