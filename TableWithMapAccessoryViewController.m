@@ -19,6 +19,7 @@
 	 MapViewControllerDelegate>
 
 @property (strong, nonatomic) UIPopoverController *flipsidePopoverController;
+@property (strong, nonatomic) NSString* unlocalizedTitle;
 
 @end
 
@@ -29,7 +30,10 @@
 @synthesize retrievalDate = _retrievalDate;
 @synthesize systemLocaleFormatter = _systemLocaleFormatter;
 
+@synthesize alertView = _alertView;
+
 @synthesize flipsidePopoverController = _flipsidePopoverController;
+@synthesize unlocalizedTitle;
 
 #pragma mark - syntheisize overrides
 
@@ -108,7 +112,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-	self.title = NSLocalizedString(self.title, nil);
+	self.unlocalizedTitle = self.title;
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
 	{
 		[self.navigationController.navigationBar
@@ -116,6 +120,11 @@
 		[self.navigationController.navigationBar
 			setTitleVerticalPositionAdjustment:-2.0 forBarMetrics:UIBarMetricsLandscapePhone];
 	}
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+	[super viewWillAppear:animated];
+	self.title = NSLocalizedString(self.unlocalizedTitle, nil);
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -143,6 +152,14 @@
 			self.navigationItem.rightBarButtonItem.enabled = NO;		
 	}
 
+}
+
+#pragma mark - UIAlertViewDelegate protocol implementation
+#pragma @optional
+
+- (void)alertView:(UIAlertView *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex {
+	if (alertView == self.alertView)
+		self.alertView = nil;
 }
 
 #pragma mark - UIPopoverControllerDelegate protocol implementation
@@ -219,7 +236,7 @@
 	}
 	else
 	{
-		[xolawareReachability alertNetworkUnavailable];
+		self.alertView = [xolawareReachability alertNetworkUnavailable:self];
 	}
 }
 
