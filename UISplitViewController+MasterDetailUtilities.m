@@ -10,6 +10,16 @@
 
 @implementation UISplitViewController (MasterDetailUtilities)
 
+- (UIBarButtonItem*)masterBarButtonItem {
+	return self.detailUIViewController.navigationItem.leftBarButtonItem;
+}
+
+- (void)setMasterBarButtonItem:(UIBarButtonItem*)masterBarButtonItem {
+	self.detailUIViewController.navigationItem.leftBarButtonItem = masterBarButtonItem;
+}
+
+#pragma mark - private implementation
+
 - (UIViewController*)topViewController:(id)controller
 {
 	if ([controller isKindOfClass:[UITabBarController class]])
@@ -17,6 +27,14 @@
 	if ([controller respondsToSelector:@selector(topViewController)])
 		return [controller topViewController];
 	return nil;
+}
+
+#pragma mark - public implementation
+
+- (UIViewController*)detailUIViewController {
+	id controller = [self topViewController:[self.viewControllers lastObject]]; 
+	assert([controller isKindOfClass:[UIViewController class]]);
+	return (UIViewController*)controller;
 }
 
 - (UITabBarController*)masterTabBarController {
@@ -32,12 +50,6 @@
 
 - (UIViewController*)masterUIViewController {
 	return [self topViewController:[self.viewControllers objectAtIndex:0]];
-}
-
-- (UIViewController*)detailUIViewController {
-	id controller = [self topViewController:[self.viewControllers lastObject]]; 
-	assert([controller isKindOfClass:[UIViewController class]]);
-	return (UIViewController*)controller;
 }
 
 @end
