@@ -10,6 +10,8 @@
 
 @interface UISplitViewController (MasterDetailUtilities)
 
+@property (nonatomic) UIBarButtonItem* masterBarButtonItem;
+
 - (UIViewController*)detailUIViewController;
 - (UIViewController*)masterUIViewController;
 
