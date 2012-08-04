@@ -162,7 +162,7 @@ static void ReachabilityCallback(SCNetworkReachabilityRef target,
 						 otherButtonTitles:nil];
 
 	[_alertView show];
-	return _alertView;
+	return [_alertView autorelease];
 }
 
 + (xolawareReachability*)reachabilityWithHostName:(NSString*)hostName;
