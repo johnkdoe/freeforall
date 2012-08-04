@@ -20,7 +20,7 @@
 #import "xolawareReachability.h"
 
 @interface ScrollableImageDetailViewController ()
-<UIPopoverControllerDelegate, FlipsideViewControllerDelegate>
+	<UIPopoverControllerDelegate, FlipsideViewControllerDelegate>
 
 @property (strong, nonatomic) IBOutlet UITapGestureRecognizer *singleTapGesture;
 @property (strong, nonatomic) IBOutlet UITapGestureRecognizer *doubleTapGesture;
@@ -139,7 +139,7 @@
 #endif
 	if (!self.barsHidden)
 		return;
-	
+
 	UIApplication* uiApp = [UIApplication sharedApplication];
 	xolawareUIResponderWithCoreTelelphonyHandling* xolawareTelephonyHandler = notification.object;
 	BOOL animate = (BOOL)self.view.window;
@@ -161,17 +161,17 @@
 
 - (void)debugLog:(NSString*)caller
 {
-	//	NSLog(@"[%@]z=%g,svb={%g,%g,%g,%g},svf={%g,%g,%g,%g},nivb={%g,%g,%g,%g},nivf={%g,%g,%g,%g}",
-	//		  caller, self.scrollView.zoomScale,
-	//		  self.scrollView.bounds.origin.x, self.scrollView.bounds.origin.y,
-	//		  self.scrollView.bounds.size.width, self.scrollView.bounds.size.height,
-	//		  self.scrollView.frame.origin.x, self.scrollView.frame.origin.y,
-	//		  self.scrollView.frame.size.width, self.scrollView.frame.size.height,
-	//		  self.nestedImageView.bounds.origin.x, self.nestedImageView.bounds.origin.y,
-	//		  self.nestedImageView.bounds.size.width, self.nestedImageView.bounds.size.height,
-	//		  self.nestedImageView.bounds.origin.x, self.nestedImageView.bounds.origin.y,
-	//		  self.nestedImageView.bounds.size.width, self.nestedImageView.bounds.size.height
-	//		  );
+//	NSLog(@"[%@]z=%g,svb={%g,%g,%g,%g},svf={%g,%g,%g,%g},nivb={%g,%g,%g,%g},nivf={%g,%g,%g,%g}",
+//		  caller, self.scrollView.zoomScale,
+//		  self.scrollView.bounds.origin.x, self.scrollView.bounds.origin.y,
+//		  self.scrollView.bounds.size.width, self.scrollView.bounds.size.height,
+//		  self.scrollView.frame.origin.x, self.scrollView.frame.origin.y,
+//		  self.scrollView.frame.size.width, self.scrollView.frame.size.height,
+//		  self.nestedImageView.bounds.origin.x, self.nestedImageView.bounds.origin.y,
+//		  self.nestedImageView.bounds.size.width, self.nestedImageView.bounds.size.height,
+//		  self.nestedImageView.bounds.origin.x, self.nestedImageView.bounds.origin.y,
+//		  self.nestedImageView.bounds.size.width, self.nestedImageView.bounds.size.height
+//		  );
 }
 
 - (void)establishGestureDependencies
@@ -189,7 +189,7 @@
 	BOOL isPad = UIUserInterfaceIdiomPad == [[UIDevice currentDevice] userInterfaceIdiom];
 	CGFloat delay = isPad ? 0.333 : 0.4;
 	CGRect hiddenBlindsRect = CGRectMake(0, 0, self.blindsImageView.frame.size.width, 0);
-	
+
 	[UIView animateWithDuration:duration+delay delay:delay options:UIViewAnimationCurveEaseInOut
 					 animations:^{ self.blindsImageView.frame = hiddenBlindsRect; }
 					 completion:^(BOOL finished) {
@@ -291,7 +291,7 @@ typedef void (^completionBlock)(BOOL);
 	xolawareReachability* curReach = [note object];
 	NSParameterAssert([curReach isKindOfClass:[xolawareReachability class]]);
 #endif
-	
+
 	// setImage: -> nestImageInScrollView => stops notifier + hides networkUnavailableIndicator
 	self.image = nil;
 }
@@ -327,64 +327,64 @@ typedef void (^completionBlock)(BOOL);
 
 	// must be performed after hiding/showing of statusBar
 	[self.navigationController setNavigationBarHidden:hidden animated:animated];
-	
+
 }
 
 /*
- the math below all works, but when done, there's a black space in the master area
+	the math below all works, but when done, there's a black space in the master area
  
- - (void)setSplitViewMasterViewControllerHidden:(BOOL)hidden animated:(BOOL)animated
- {
- if (self.splitViewController
- && UIInterfaceOrientationIsLandscape([[UIDevice currentDevice] orientation]))
- {
- UIView* masterView = self.splitViewController.selectedTabBarNavigationController.view;	// 0x07954da0 UILayoutContainerView		  {  0,0; 320 748}
- UIView* detailView = self.splitViewController.detailUIViewController.view;				// 0x0794a910 UIView					  {  0,0; 703 748}
- UIView* detailViewViewControllerWrapperView = detailView.superview;						// 0x0794add0 UIViewControllerWrapperView {  0,0; 703 748}
- UIView* navigationTransitionView = detailViewViewControllerWrapperView.superview;		// 0x079547d0 UINavigationTransitionView  {  0,0; 703 748}
- UIView* detailViewLayout = navigationTransitionView.superview;							// 0x07978da0 UILayoutContainerView		  {321,0; 703 748}
- 
- UIView* masterViewControllerWrapperView = masterView.superview;
- UIView* masterTransitionView = masterViewControllerWrapperView.superview;
- UIView* masterViewLayout = masterTransitionView.superview;
- 
- assert(masterViewLayout.superview == detailViewLayout.superview);
- for (UIView* view in masterViewLayout.superview.subviews)
- if (view == masterViewLayout || view == detailViewLayout)
- continue;
- else
- [view removeFromSuperview];
- 
- CGRect masterLayoutFrame = masterView.frame;
- CGRect detailLayoutFrame = detailViewLayout.frame;
- 
- CGFloat width = masterLayoutFrame.size.width - masterLayoutFrame.origin.x;
- if (hidden)
- {
- masterLayoutFrame.origin.x = -width;
- detailLayoutFrame.size.width += detailLayoutFrame.origin.x;
- detailLayoutFrame.origin.x = 0;
- }
- else
- {
- detailLayoutFrame.size.width -= width;
- masterLayoutFrame.origin.x = 0;
- detailLayoutFrame.origin.x = width + 1;
- }
- CGRect innerFrame
- = CGRectMake(0, 0, detailLayoutFrame.size.width, detailLayoutFrame.size.height);
- [UIView animateWithDuration:animated ? 0.3 : 0
- animations:^{
- masterTransitionView.superview.frame = masterLayoutFrame;
- masterTransitionView.superview.hidden = hidden;
- navigationTransitionView.superview.frame = detailLayoutFrame;
- detailViewViewControllerWrapperView.superview.frame = innerFrame;
- detailView.superview.frame = innerFrame;
- detailView.frame = innerFrame;
- }
- ];
- }
- }*/
+- (void)setSplitViewMasterViewControllerHidden:(BOOL)hidden animated:(BOOL)animated
+{
+	if (self.splitViewController
+		&& UIInterfaceOrientationIsLandscape([[UIDevice currentDevice] orientation]))
+	{
+		UIView* masterView = self.splitViewController.selectedTabBarNavigationController.view;	// 0x07954da0 UILayoutContainerView		  {  0,0; 320 748}
+		UIView* detailView = self.splitViewController.detailUIViewController.view;				// 0x0794a910 UIView					  {  0,0; 703 748}
+		UIView* detailViewViewControllerWrapperView = detailView.superview;						// 0x0794add0 UIViewControllerWrapperView {  0,0; 703 748}
+		UIView* navigationTransitionView = detailViewViewControllerWrapperView.superview;		// 0x079547d0 UINavigationTransitionView  {  0,0; 703 748}
+		UIView* detailViewLayout = navigationTransitionView.superview;							// 0x07978da0 UILayoutContainerView		  {321,0; 703 748}
+
+		UIView* masterViewControllerWrapperView = masterView.superview;
+		UIView* masterTransitionView = masterViewControllerWrapperView.superview;
+		UIView* masterViewLayout = masterTransitionView.superview;
+
+		assert(masterViewLayout.superview == detailViewLayout.superview);
+		for (UIView* view in masterViewLayout.superview.subviews)
+			if (view == masterViewLayout || view == detailViewLayout)
+				continue;
+			else
+				[view removeFromSuperview];
+
+		CGRect masterLayoutFrame = masterView.frame;
+		CGRect detailLayoutFrame = detailViewLayout.frame;
+
+		CGFloat width = masterLayoutFrame.size.width - masterLayoutFrame.origin.x;
+		if (hidden)
+		{
+			masterLayoutFrame.origin.x = -width;
+			detailLayoutFrame.size.width += detailLayoutFrame.origin.x;
+			detailLayoutFrame.origin.x = 0;
+		}
+		else
+		{
+			detailLayoutFrame.size.width -= width;
+			masterLayoutFrame.origin.x = 0;
+			detailLayoutFrame.origin.x = width + 1;
+		}
+		CGRect innerFrame
+		  = CGRectMake(0, 0, detailLayoutFrame.size.width, detailLayoutFrame.size.height);
+		[UIView animateWithDuration:animated ? 0.3 : 0
+						 animations:^{
+							 masterTransitionView.superview.frame = masterLayoutFrame;
+							 masterTransitionView.superview.hidden = hidden;
+							 navigationTransitionView.superview.frame = detailLayoutFrame;
+							 detailViewViewControllerWrapperView.superview.frame = innerFrame;
+							 detailView.superview.frame = innerFrame;
+							 detailView.frame = innerFrame;
+						 }
+		 ];
+	}
+}*/
 
 - (void)setStatusBarHidden:(BOOL)hidden animated:(BOOL)animated
 {
@@ -399,7 +399,7 @@ typedef void (^completionBlock)(BOOL);
         CGRect portraitFrame = app.statusBarFrame;
         [app setStatusBarOrientation:originalOrientation animated:NO];
         _ignoreExceptionallyUglyStatusBarWillChangeFrameNotificationKludgeHackWorkaround = NO;
-		
+
         performStatusBarAnimation = (40 != portraitFrame.size.height);
     }
     else
@@ -419,15 +419,15 @@ typedef void (^completionBlock)(BOOL);
 }
 
 /*
- - (void)showBlinds
- {
- self.blindsImageView.hidden = NO;
- CGRect visibleBlindsRect = [self visibleBlindsRect];
- [UIView animateWithDuration:0.2 delay:0.0 options:UIViewAnimationCurveEaseOut
- animations:^{ self.blindsImageView.frame = visibleBlindsRect; }
- completion:^(BOOL finished) { [self hideBlinds]; } ];
- }
- */
+- (void)showBlinds
+{
+	self.blindsImageView.hidden = NO;
+	CGRect visibleBlindsRect = [self visibleBlindsRect];
+	[UIView animateWithDuration:0.2 delay:0.0 options:UIViewAnimationCurveEaseOut
+	animations:^{ self.blindsImageView.frame = visibleBlindsRect; }
+	completion:^(BOOL finished) { [self hideBlinds]; } ];
+}
+*/
 
 - (UIStatusBarAnimation)statusBarAnimation:(BOOL)animated {
 	return animated ? UIStatusBarAnimationSlide : UIStatusBarAnimationNone;
@@ -454,12 +454,12 @@ typedef void (^completionBlock)(BOOL);
 
 - (void)statusBarWillChangeFrame:(NSNotification*)notification {
 	if (_ignoreExceptionallyUglyStatusBarWillChangeFrameNotificationKludgeHackWorkaround)return;
-	
+
 	assert(notification.name == UIApplicationWillChangeStatusBarFrameNotification);
 	if (self.barsHidden)
 	{
 		NSValue* userInfoCGRect
-		= [notification.userInfo objectForKey:UIApplicationStatusBarFrameUserInfoKey];
+		  = [notification.userInfo objectForKey:UIApplicationStatusBarFrameUserInfoKey];
 		CGRect properAppStatusBarFrame, appStatusBarFrame = [notification.object statusBarFrame];
 		CGRect properNewStatusBarFrame, newStatusBarFrame = [userInfoCGRect CGRectValue];
 		BOOL orientationChange = NO;
@@ -475,9 +475,9 @@ typedef void (^completionBlock)(BOOL);
 		{
 			properNewStatusBarFrame = [self rectForStatusBarFrame:newStatusBarFrame];
 			orientationChange
-			= properNewStatusBarFrame.size.width != properAppStatusBarFrame.size.width;
+			  = properNewStatusBarFrame.size.width != properAppStatusBarFrame.size.width;
 		}
-		
+
 		if (!orientationChange)	// i.e. not an orientation change
 		{
 			BOOL hidden = properNewStatusBarFrame.size.height <= 20;
@@ -512,9 +512,9 @@ typedef void (^completionBlock)(BOOL);
 	{
 		self.title = self.navigationItem.title;
 		[self.navigationController.navigationBar
-		 setTitleVerticalPositionAdjustment:-2.0 forBarMetrics:UIBarMetricsDefault];
+			setTitleVerticalPositionAdjustment:-2.0 forBarMetrics:UIBarMetricsDefault];
 		[self.navigationController.navigationBar
-		 setTitleVerticalPositionAdjustment:-2.0 forBarMetrics:UIBarMetricsLandscapePhone];
+			setTitleVerticalPositionAdjustment:-2.0 forBarMetrics:UIBarMetricsLandscapePhone];
 	}
 }
 
@@ -551,7 +551,7 @@ typedef void (^completionBlock)(BOOL);
 {
 	if (self.barsHidden)
 		[self setBarsHidden:NO animated:animated];
-	
+
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
 		[self removeNotificationObservers];
 
@@ -581,7 +581,7 @@ typedef void (^completionBlock)(BOOL);
 	[[NSNotificationCenter defaultCenter] removeObserver:self
 													name:kReachabilityChangedNotification
 												  object:nil];
-	
+
 	self.internetReachability = nil;
 	self.nestedImageView = nil;
 	[self setScrollView:nil];						// automatically inserted by Xcode
@@ -600,18 +600,18 @@ typedef void (^completionBlock)(BOOL);
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
-	// more animation here than i have time to get right; so just turning it off
-	// (specifically, the blinds image is too long to start when rotating to portrait
-	// and too short to start when rotating to landscape)
-	//	if (self.nestedImageView)
-	//		[self hideBlinds:0.2];
-	
+// more animation here than i have time to get right; so just turning it off
+// (specifically, the blinds image is too long to start when rotating to portrait
+// and too short to start when rotating to landscape)
+//	if (self.nestedImageView)
+//		[self hideBlinds:0.2];
+
 	// need all these values for zooming as done after the orientation
 	float zoomScale = self.scrollView.zoomScale;
 	float oldMinZoom = self.scrollView.minimumZoomScale;
-	
+
 	[self recommendedZoomScales];
-	
+
 	if (zoomScale == oldMinZoom || zoomScale < self.scrollView.minimumZoomScale)
 		[self.scrollView setZoomScale:self.scrollView.minimumZoomScale animated:YES];
 	else if (zoomScale > self.scrollView.maximumZoomScale)
@@ -625,16 +625,16 @@ typedef void (^completionBlock)(BOOL);
 	}
 }
 /*
- - (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation 
- duration:(NSTimeInterval)duration
- {
- // more animation here than i have time to get right; so just turning it off
- // (specifically, the blinds image is too long to start when rotating to portrait
- // and too short to start when rotating to landscape)
- if (self.nestedImageView)
- [self showBlinds];
- }
- */
+- (void)willRotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation 
+								duration:(NSTimeInterval)duration
+{
+// more animation here than i have time to get right; so just turning it off
+// (specifically, the blinds image is too long to start when rotating to portrait
+// and too short to start when rotating to landscape)
+	if (self.nestedImageView)
+		[self showBlinds];
+}
+*/
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
@@ -744,8 +744,8 @@ typedef void (^completionBlock)(BOOL);
 		appStatusBarFrame.size.width = 20;
 	NSValue* statusBarFrameRect = [NSValue valueWithCGRect:appStatusBarFrame];
 	NSDictionary* userInfo
-	= [NSDictionary dictionaryWithObject:statusBarFrameRect
-								  forKey:UIApplicationStatusBarFrameUserInfoKey];
+	  = [NSDictionary dictionaryWithObject:statusBarFrameRect
+									forKey:UIApplicationStatusBarFrameUserInfoKey];
 	NSNotificationCenter* notifyCenter = [NSNotificationCenter defaultCenter];
 	[notifyCenter postNotificationName:UIApplicationWillChangeStatusBarFrameNotification
 								object:app
