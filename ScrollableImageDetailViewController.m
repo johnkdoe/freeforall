@@ -759,7 +759,8 @@ typedef void (^completionBlock)(BOOL);
 {
     if (UIUserInterfaceIdiomPhone == [[UIDevice currentDevice] userInterfaceIdiom])
 	{
-        [self dismissModalViewControllerAnimated:YES];
+//		[self dismissModalViewControllerAnimated:YES];
+		[self dismissViewControllerAnimated:YES completion:nil];
     }
 	else
 	{
