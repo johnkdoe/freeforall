@@ -109,6 +109,7 @@
 										returningResponse:&urlResponse
 													error:&error];
 		if (error)
+		{
 			if (NSURLErrorTimedOut == error.code)
 				// eventually put this in a mini-alert of some sort
 				NSLog(@"%@ URL = %@", error.localizedDescription,
@@ -124,9 +125,12 @@
 #if DEBUG
 			else
 				NSLog(@"REST/json: %@", error);
+		}
 //		NSLog(@"request complete");
 		if (!data)
 			NSLog(@"network data retrieval: no data");
+#else
+		}
 #endif
 		return data;
 	};
