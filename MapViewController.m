@@ -138,7 +138,7 @@
 {
 	if (!self.mapView)
 		return;
-	if (self.annotations)
+	if (self.annotations.count)
 	{
 		[self.mapView addAnnotations:self.annotations];
 		if (self.annotations.count == 1)

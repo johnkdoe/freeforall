@@ -23,7 +23,6 @@ static CGFloat _storyboardFontSize;
 {
 	return [object isKindOfClass:[ImageTitleDescriptionDisclosureTableViewCell class]]
 		&& [[object photoId] isEqualToString:self.photoId];
-		 
 }
 
 - (void)normalizeFontSizeUsingCellAccessoryType:(UITableViewCellAccessoryType)reusedType
@@ -41,12 +40,18 @@ static CGFloat _storyboardFontSize;
 		  default:;
 		}
 
-	CGFloat actualFontSize;
+	CGFloat actualFontSize, minFontSize;
+	if ([self.itddTitle respondsToSelector:@selector(minimumScaleFactor)])
+		minFontSize = self.itddTitle.minimumScaleFactor * _storyboardFontSize;
+#if __IPHONE_OS_VERSION_MIN_REQUIRED < 60000
+	else
+		minFontSize = self.itddTitle.minimumFontSize;
+#endif
 	[self.itddTitle.text sizeWithFont:[titleFont fontWithSize:_storyboardFontSize]
-						  minFontSize:self.itddTitle.minimumFontSize
+						  minFontSize:minFontSize
 					   actualFontSize:&actualFontSize
 							 forWidth:self.itddTitle.frame.size.width+widthAdjustment-2
-						lineBreakMode:UILineBreakModeWordWrap];
+						lineBreakMode:NSLineBreakByWordWrapping];
 	self.itddTitle.font = [titleFont fontWithSize:(CGFloat)((int)actualFontSize)];
 }
 

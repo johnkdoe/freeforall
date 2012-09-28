@@ -55,8 +55,6 @@
 #define API_RECENT_UPLOADS_FORMAT	@".photos.recentlyUpdated&auth_token=72157630139169760-38bd6548de38d165&min_date=%@"
 #define API_TOP_PLACES_ARGS			@".places.getTopPlacesList&place_type_id=7"
 
-#define API_PACIFIC_BEACH			@".places.find&query=Pacific+Beach%2C+California%2C+92109"
-
 #define API_PHOTOS	@"photos.photo"
 #define API_PLACES	@"places.place"
 
@@ -164,10 +162,60 @@
     return [[FlickrRestAPI query:request] valueForKeyPath:API_PLACES];
 }
 
++ (NSDictionary*)woePlace:(NSString*)woeString {
+	NSString* request = [API_REST_QUERY stringByAppendingString:woeString];
+	return [[FlickrRestAPI query:request] valueForKeyPath:@"place.locality"];
+}
+
++ (NSArray*)apiPlace:(NSString*)apiPlace {
+	NSString* request = [API_REST_QUERY stringByAppendingString:apiPlace];
+	return [[FlickrRestAPI query:request] valueForKeyPath:API_PLACES];
+}
+
+#define API_AMSTERDAM		@".places.getInfo&woe_id=727232"
+#define API_ANAHEIM			@".places.getInfo&woe_id=2354447"
+#define API_BARCELONA		@".places.getInfo&woe_id=753692"
+#define API_BERLIN			@".places.getInfo&woe_id=2442047"
+#define API_CHICAGO			@".places.getInfo&woe_id=2379574"
+#define API_LONDON			@".places.getInfo&woe_id=44418"
+#define API_LOS_ANGELES		@".places.getInfo&woe_id=2442047"
+#define API_NEW_YORK		@".places.getInfo&woe_id=2459115"
+#define API_PACIFIC_BEACH	@".places.find&query=Pacific+Beach%2C+California%2C+92109"
+#define API_PARIS			@".places.getInfo&woe_id=615702"
+#define API_ROME			@".places.getInfo&woe_id=721943"
+#define API_SAN_FRANCISCO	@".places.getInfo&woe_id=2487956"
+#define API_SEOUL			@".places.find&query=Seoul%2C+South+Korea"
+#define API_SINGAPORE		@".places.getInfo&woe_id=1062617"
+#define API_SYDNEY			@".places.getInfo&woe_id=1105779"
+#define API_TAIPEI			@".places.getInfo&woe_id=2306179"
+#define API_TOKYO			@".places.getInfo&woe_id=1118370"
+#define API_WASHINGTON_DC	@".places.getInfo&woe_id=2514815"
+
++ (NSArray*)backupTopPlaces {
+	NSArray* resultArray = [NSArray arrayWithObject:[self woePlace:API_LONDON]];
+	resultArray = [resultArray arrayByAddingObject:[self woePlace:API_NEW_YORK]];
+	resultArray = [resultArray arrayByAddingObject:[self woePlace:API_TOKYO]];
+	resultArray = [resultArray arrayByAddingObject:[self woePlace:API_SAN_FRANCISCO]];
+	resultArray = [resultArray arrayByAddingObject:[self woePlace:API_PARIS]];
+	resultArray = [resultArray arrayByAddingObject:[self woePlace:API_AMSTERDAM]];
+	resultArray = [resultArray arrayByAddingObject:[self woePlace:API_ANAHEIM]];
+	resultArray = [resultArray arrayByAddingObject:[self woePlace:API_BARCELONA]];
+	resultArray = [resultArray arrayByAddingObject:[self woePlace:API_BERLIN]];
+	resultArray = [resultArray arrayByAddingObject:[self woePlace:API_CHICAGO]];
+	resultArray = [resultArray arrayByAddingObject:[self woePlace:API_LOS_ANGELES]];
+	resultArray = [resultArray arrayByAddingObject:[self woePlace:API_ROME]];
+	resultArray = [resultArray arrayByAddingObjectsFromArray:[self apiPlace:API_PACIFIC_BEACH]];
+	resultArray = [resultArray arrayByAddingObjectsFromArray:[self apiPlace:API_SEOUL]];
+	resultArray = [resultArray arrayByAddingObject:[self woePlace:API_SINGAPORE]];
+	resultArray = [resultArray arrayByAddingObject:[self woePlace:API_SYDNEY]];
+	resultArray = [resultArray arrayByAddingObject:[self woePlace:API_TAIPEI]];
+	resultArray = [resultArray arrayByAddingObject:[self woePlace:API_WASHINGTON_DC]];
+
+	return resultArray;
+}
+
 + (NSDictionary*)pacificBeach {
-	NSString* request = [API_REST_QUERY stringByAppendingString:API_PACIFIC_BEACH];
-	NSArray* resultArray = [[FlickrRestAPI query:request] valueForKeyPath:API_PLACES];
-	return [resultArray objectAtIndex:0];
+	return [[self apiPlace:API_PACIFIC_BEACH] objectAtIndex:0];
 }
 
 + (NSArray*)photosInPlace:(NSDictionary *)place maxResults:(int)maxResults {
