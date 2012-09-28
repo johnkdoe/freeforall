@@ -27,10 +27,11 @@
 @class NSDictionary;
 @class NSURL;
 
-@interface FlickrRestAPI
+@interface FlickrRestAPI : NSObject
 
 + (NSArray*)recentGeoreferencedPhotos;
 + (NSArray*)topPlaces;
++ (NSArray*)backupTopPlaces;
 + (NSArray*)photosInPlace:(NSDictionary*)place maxResults:(int)maxResults;
 + (NSArray*)recentUsingFormat:(NSString*)apiFormat count:(int)maxResults page:(int)page;
 + (NSDictionary*)readableParts:(NSDictionary*)place;
