@@ -129,6 +129,16 @@
 
 #pragma mark - ScrollableImageDetailViewController private implementation
 
+- (void)addGestureRecognizersToNestedImageView:(UIImageView*)nestedImageView {
+	[nestedImageView addGestureRecognizer:self.singleTapGesture];
+	[nestedImageView addGestureRecognizer:self.doubleTapGesture];
+	[nestedImageView addGestureRecognizer:self.tripleTapGesture];
+	[nestedImageView addGestureRecognizer:self.fourTapGesture];
+
+	[nestedImageView addGestureRecognizer:self.tap1ThenHoldGesture];
+	[nestedImageView addGestureRecognizer:self.tap2ThenHoldGesture];
+}
+
 - (void)callDidChange:(NSNotification*)notification {
 	assert(notification.name == xolawareCoreTelephonyCallDidChangeNotification);
 #if DEBUG
@@ -213,9 +223,11 @@ typedef void (^completionBlock)(BOOL);
 								options:UIViewAnimationOptionTransitionCrossDissolve
 							 animations:^{ _nestedImageView.alpha = 0; }
 							 completion:^(BOOL oldImageDeleted) {
-								 if (oldImageDeleted)
+								 if (oldImageDeleted) {
+									 [self removeGestureRecognizersFromNestedImageView];
 									 [_nestedImageView removeFromSuperview];
-								 [self nestImageInScrollViewFadeInNewImage];		
+								 }
+								 [self nestImageInScrollViewFadeInNewImage];
 							 }];
 	}
 	else
@@ -232,6 +244,8 @@ typedef void (^completionBlock)(BOOL);
 		
 		self.scrollView.contentSize = self.image.size;
 		UIImageView* imageView = [[UIImageView alloc] initWithImage:self.image];
+		imageView.userInteractionEnabled = YES;
+		[self addGestureRecognizersToNestedImageView:imageView];
 		BOOL isPad = ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad);
 		if (isPad)
 			imageView.alpha = 0;
@@ -311,6 +325,16 @@ typedef void (^completionBlock)(BOOL);
 	[notificationCenter removeObserver:self
 								  name:UIApplicationWillChangeStatusBarFrameNotification
 								object:nil];
+}
+
+- (void)removeGestureRecognizersFromNestedImageView {
+	[_nestedImageView removeGestureRecognizer:self.singleTapGesture];
+	[_nestedImageView removeGestureRecognizer:self.doubleTapGesture];
+	[_nestedImageView removeGestureRecognizer:self.tripleTapGesture];
+	[_nestedImageView removeGestureRecognizer:self.fourTapGesture];
+
+	[_nestedImageView removeGestureRecognizer:self.tap1ThenHoldGesture];
+	[_nestedImageView removeGestureRecognizer:self.tap2ThenHoldGesture];
 }
 
 - (void)setBarsHidden:(BOOL)hidden animated:(BOOL)animated
@@ -491,6 +515,18 @@ typedef void (^completionBlock)(BOOL);
 	return CGRectMake(0, 0, self.blindsImageView.frame.size.width, self.view.frame.size.height);
 }
 
+- (void)zoomNestedImageViewForGesture:(UIGestureRecognizer*)gesture withScale:(CGFloat)zoomScale
+{
+	CGPoint newCenter = [gesture locationInView:self.nestedImageView];
+	// pretty much straight from MyImagePicker zoomRectForScale
+	CGRect zRect;
+	zRect.size.width  = self.scrollView.frame.size.width  / zoomScale;
+	zRect.size.height = self.scrollView.frame.size.height / zoomScale;
+	zRect.origin.x = newCenter.x - (zRect.size.width  / 2.0);
+	zRect.origin.y = newCenter.y - (zRect.size.height / 2.0);
+	[self.scrollView zoomToRect:zRect animated:YES];
+}
+
 #pragma mark - UIViewController life cycle overrides
 
 - (void)viewDidLoad
@@ -560,13 +596,16 @@ typedef void (^completionBlock)(BOOL);
 
 - (void)viewDidDisappear:(BOOL)animated
 {
-	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
+	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
+		[self removeGestureRecognizersFromNestedImageView];
 		[self.navigationController popToEligibleViewController:self.nestedNavControllerHandler
 													  animated:NO];
+	}
 
 	[super viewDidDisappear:animated];
 }
 
+/*
 - (void)viewWillUnload
 {
 	if (self.barsHidden)
@@ -597,6 +636,7 @@ typedef void (^completionBlock)(BOOL);
     [super viewDidUnload];
     // Release any retained subviews of the main view.
 }
+*/
 
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
@@ -698,9 +738,8 @@ typedef void (^completionBlock)(BOOL);
 {
 	if (self.image && gesture.state == UIGestureRecognizerStateRecognized)
 	{
-		// this should cause it to bounce if it ends up greater than the max
-		[self.scrollView setZoomScale:self.scrollView.zoomScale*1.25 animated:YES];
-		[self.scrollView setNeedsDisplay];
+		CGFloat zoomScale = MIN(self.scrollView.zoomScale * 1.25, 4.0);
+		[self zoomNestedImageViewForGesture:gesture withScale:zoomScale];
 	}
 }
 
@@ -708,9 +747,8 @@ typedef void (^completionBlock)(BOOL);
 {
 	if (self.image && gesture.state == UIGestureRecognizerStateRecognized)
 	{
-		[self.scrollView setZoomScale:1 animated:YES];
-		[self.scrollView setNeedsDisplay];
-	}	
+		[self zoomNestedImageViewForGesture:gesture withScale:1];
+	}
 }
 
 - (IBAction)ignoreMoreThan3Taps:(id)sender {}
@@ -719,17 +757,15 @@ typedef void (^completionBlock)(BOOL);
 {
 	if (self.image && gesture.state == UIGestureRecognizerStateBegan)
 	{
-		[self.scrollView setZoomScale:self.recommendedZoomScale animated:YES];
-		[self.scrollView setNeedsDisplay];
-	}	
+		[self zoomNestedImageViewForGesture:gesture withScale:self.recommendedZoomScale];
+	}
 }
 
 - (IBAction)tap2ThenHold:(UILongPressGestureRecognizer*)gesture
 {
 	if (self.image && gesture.state == UIGestureRecognizerStateBegan)
 	{
-		[self.scrollView setZoomScale:self.scrollView.maximumZoomScale animated:YES];
-		[self.scrollView setNeedsDisplay];
+		[self zoomNestedImageViewForGesture:gesture withScale:self.scrollView.maximumZoomScale];
 	}	
 }
 
