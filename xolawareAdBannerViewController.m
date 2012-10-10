@@ -92,6 +92,7 @@
 
 @property (strong, nonatomic)	UIImage* bannerContainerImage;
 @property (readonly, nonatomic) UIImageView* bannerContainerImageView;
+@property (readonly, nonatomic) UIView* bannerContainerView;
 @property (strong, nonatomic)	ADBannerView* bannerView;
 @property (weak, nonatomic)		id<xolawareAdBannerViewActionRotationWorkaround> buttonDelegate;
 @property (strong, nonatomic)	UIViewController* contentController;
@@ -105,6 +106,7 @@
 
 @synthesize bannerContainerImage = _bannerContainerImage;
 @synthesize bannerContainerImageView = _bannerContainerImageView;
+@synthesize bannerContainerView = _bannerContainerView;
 @synthesize bannerView = _bannerView;
 @synthesize buttonDelegate = _buttonDelegate;
 @synthesize contentController = _contentController;
@@ -138,9 +140,14 @@
 		assert(self.bannerView.frame.size.height + 6 == _bannerContainerImage.size.height);
 
 		_bannerContainerImageView = [[UIImageView alloc] initWithImage:_bannerContainerImage];
-		_bannerContainerImageView.userInteractionEnabled = YES;
-		[self.view addSubview:self.bannerContainerImageView];
-		[self.bannerContainerImageView addSubview:self.bannerView];
+		_bannerContainerImageView.alpha = .7;
+
+		_bannerContainerView = [[UIView alloc] initWithFrame:_bannerContainerView.bounds];
+		_bannerContainerView.backgroundColor = [UIColor whiteColor];
+		[self.bannerContainerView addSubview:_bannerContainerImageView];
+		[self.bannerContainerView addSubview:_bannerView];
+
+		[self.view addSubview:self.bannerContainerView];
 	}
 	else
 	{
@@ -156,9 +163,9 @@
 	CGRect viewBounds = self.view.bounds;
 	CGRect bannerFrame = _bannerView.frame;
 	BOOL isPortrait = UIInterfaceOrientationIsPortrait(self.interfaceOrientation);
-	if (_bannerContainerImageView)
+	if (_bannerContainerView)
 	{
-		CGRect containerFrame = _bannerContainerImageView.frame;
+		CGRect containerFrame = _bannerContainerView.frame;
 		containerFrame.size.width = viewBounds.size.width;
 		if (isPortrait && !_bannerView.isBannerLoaded)
 		{
@@ -171,7 +178,7 @@
 			containerFrame.size.height = _bannerContainerImage.size.height;
 		}
 		containerFrame.origin.y = viewBounds.size.height - containerFrame.size.height;
-		_bannerContainerImageView.frame = containerFrame;
+		_bannerContainerView.frame = containerFrame;
 		viewBounds.size.height -= containerFrame.size.height;
 
 		bannerFrame.origin.x = containerFrame.size.width - bannerFrame.size.width;
