@@ -15,11 +15,11 @@
 @property (weak, nonatomic) UIWebView* webView;
 
 @property (weak, nonatomic)	UIView* browserView;
-@property (weak, nonatomic)	NSURL*	currentURL;
 @property (nonatomic)		float	xoomScale;
 
 @property (nonatomic)						float	contentScale;
 @property (nonatomic)						float	contentVerticalOffsetPct;
+@property (strong, nonatomic)				NSURL*	currentURL;
 @property (nonatomic, getter = isRotating)	BOOL	rotating;
 @property (nonatomic)						CGSize	scrollViewInitialContentSize;
 
@@ -114,8 +114,9 @@
 	if ([self isBlankOrEmptyURL:self.currentURL])
 		return;
 
-	__weak UIScrollView* scrollView = self.webView.scrollView;
 	[self.webView reload];
+
+	__weak UIScrollView* scrollView = self.webView.scrollView;
 	self.scrollViewInitialContentSize = scrollView.contentSize;
 	NSNumber* preRotateXoom = [NSNumber numberWithFloat:self.xoomScale];
 	self.xoomScale = self.scrollViewInitialContentSize.width / scrollView.frame.size.width;
@@ -178,6 +179,7 @@
 
 	self.xoomScale *= scale;
 	[self resetStandardXoomOffsetInScrollView:scrollView];
+
 	self.webView.scalesPageToFit = YES;	// now that done with zooming, turn auto-scale back on
 }
 
@@ -215,6 +217,7 @@
 				navigationType:(UIWebViewNavigationType)navigationType
 {
 	self.rotating = NO;
+
 	if (self.hasAnchor && self.currentURL && request.URL)
 	{
 		NSString* currentURL = self.currentURL.relativeString;
