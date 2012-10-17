@@ -20,6 +20,8 @@
 @property (nonatomic)						float	contentScale;
 @property (nonatomic)						float	contentVerticalOffsetPct;
 @property (strong, nonatomic)				NSURL*	currentURL;
+@property (nonatomic)						BOOL	fixingScalesPageToFit;
+@property (nonatomic, getter = isReloading)	BOOL	reloading;
 @property (nonatomic, getter = isRotating)	BOOL	rotating;
 @property (nonatomic)						CGSize	scrollViewInitialContentSize;
 
@@ -33,7 +35,6 @@
 - (id)initWithWebView:(UIWebView*)webView {
 	self = [super init];
 	if (self) {
-		self.contentVerticalOffsetPct = 0;
 		self.webView = webView;
 		self.webView.scrollView.contentOffset = CGPointZero;
 		self.webView.scrollView.showsHorizontalScrollIndicator = NO;
@@ -73,6 +74,18 @@
 	return 1.0;
 }
 
+- (void)turnOffAutoScale {
+	self.fixingScalesPageToFit = YES;
+	self.webView.scalesPageToFit = NO;
+	self.fixingScalesPageToFit = NO;
+}
+
+- (void)turnOnAutoScale {
+	self.fixingScalesPageToFit = YES;
+	self.webView.scalesPageToFit = YES;
+	self.fixingScalesPageToFit = NO;
+}
+
 - (void)resetStandardXoomOffsetInScrollView:(UIScrollView*)scrollView {
 	scrollView.contentOffset
 	  = CGPointMake(0, self.contentVerticalOffsetPct*self.browserVerticalOffsetMax);
@@ -89,14 +102,18 @@
 	scrollView.contentOffset = CGPointMake(0, yOffset);
 }
 
-- (void)setAlphaAfterZoom {
-	[UIView animateWithDuration:0.2 animations:^{ self.webView.alpha = 1; }];
-	self.webView.scalesPageToFit = YES;
+- (void)xoomAfterRotate:(NSNumber*)preRotateZoom {
+	[self turnOffAutoScale];
+	[self.webView.scrollView setZoomScale:preRotateZoom.floatValue/self.xoomScale animated:YES];
+	NSTimeInterval postXoomDelay = self.isReloading ? 0.15*self.xoomScale : 0.03;
+	[self performSelector:@selector(xoomFinal) withObject:nil afterDelay:postXoomDelay];
 }
 
-- (void)xoomAfterRotate:(NSNumber*)preRotateZoom {
-	[self.webView.scrollView setZoomScale:preRotateZoom.floatValue/self.xoomScale animated:YES];
-	[self performSelector:@selector(setAlphaAfterZoom) withObject:nil afterDelay:0.25];
+- (void)xoomFinal {
+	[self resetStandardXoomOffsetInScrollView:self.webView.scrollView];
+	self.reloading = NO;
+	[UIView animateWithDuration:0.2 animations:^{ self.webView.alpha = 1; }];
+	[self turnOnAutoScale];
 }
 
 #pragma mark - public method implementations
@@ -106,22 +123,37 @@
 		return;
 
 	self.rotating = YES;
-	self.webView.alpha = 0.1;
-	self.webView.scalesPageToFit = NO;
+	self.webView.alpha = 0.4 / self.xoomScale;
 }
 
-- (void)didRotate {
+- (void)didRotate:(UIInterfaceOrientation)fromOrientation {
 	if ([self isBlankOrEmptyURL:self.currentURL])
 		return;
 
-	[self.webView reload];
-
+	NSTimeInterval rotateWait;
+	CGFloat newXoomScale = self.xoomScale;
 	__weak UIScrollView* scrollView = self.webView.scrollView;
-	self.scrollViewInitialContentSize = scrollView.contentSize;
-	NSNumber* preRotateXoom = [NSNumber numberWithFloat:self.xoomScale];
-	self.xoomScale = self.scrollViewInitialContentSize.width / scrollView.frame.size.width;
+	if (UIDevice.currentDevice.systemVersion.floatValue < 6.0)
+	{
+		if (UIInterfaceOrientationIsPortrait(fromOrientation))
+			newXoomScale /= self.defaultXoomScale;
+		else
+			newXoomScale *= self.defaultXoomScale;
+		rotateWait = 0.22;
+		self.reloading = YES;
+		[self.webView reload];
+		self.xoomScale = self.scrollViewInitialContentSize.width / scrollView.frame.size.width;
+	}
+	else
+	{
+		rotateWait = 0.03;
+		scrollView.minimumZoomScale = self.minimumXoomScale / self.xoomScale;
+		scrollView.maximumZoomScale = self.maximumXoomScale / self.xoomScale;
+	}
 
-	[self performSelector:@selector(xoomAfterRotate:) withObject:preRotateXoom afterDelay:0.25];
+	// done as delayed perform because rotation is still part of caller animation
+	NSNumber* newXoom = [NSNumber numberWithFloat:newXoomScale];
+	[self performSelector:@selector(xoomAfterRotate:) withObject:newXoom afterDelay:rotateWait];
 }
 
 #pragma mark - UIScrollViewDelegate implementation
@@ -145,7 +177,11 @@
 	{
 		scrollView.contentOffset = CGPointMake(0, scrollView.contentOffset.y);	// align on left
 	}
-	else if (self.hasAnchor)
+	else if (self.fixingScalesPageToFit)
+	{
+		[self resetStandardXoomOffsetInScrollView:scrollView];
+	}
+	else if (self.hasAnchor && !self.isRotating && !self.isReloading)
 	{
 		[self calculateContentVerticalOffsetPct];
 		if (scrollView.contentOffset.y > self.browserVerticalOffsetMax)
@@ -153,8 +189,7 @@
 	}
 	else if (!scrollView.isZoomBouncing)
 	{
-		scrollView.contentOffset
-		  = CGPointMake(0, self.contentVerticalOffsetPct * self.browserVerticalOffsetMax);
+		[self resetStandardXoomOffsetInScrollView:scrollView];
 	}
 }
 
@@ -168,7 +203,7 @@
 	scrollView.minimumZoomScale = self.minimumXoomScale / self.xoomScale;
 	scrollView.maximumZoomScale = self.maximumXoomScale / self.xoomScale;
 
-	self.webView.scalesPageToFit = NO;	// this cause auto-scale to turn off while zooming
+	[self turnOffAutoScale];	// this cause auto-scale to turn off while zooming
 }
 
 - (void)scrollViewDidEndZooming:(UIScrollView *)scrollView
@@ -178,9 +213,10 @@
 	assert(scrollView == self.webView.scrollView && view == self.browserView);
 
 	self.xoomScale *= scale;
-	[self resetStandardXoomOffsetInScrollView:scrollView];
+	if (!self.isReloading)
+		[self resetStandardXoomOffsetInScrollView:scrollView];
 
-	self.webView.scalesPageToFit = YES;	// now that done with zooming, turn auto-scale back on
+	[self turnOnAutoScale];	// now that done with zooming, turn auto-scale back on
 }
 
 - (void)scrollViewDidZoom:(UIScrollView *)scrollView
@@ -216,15 +252,19 @@
 	shouldStartLoadWithRequest:(NSURLRequest *)request
 				navigationType:(UIWebViewNavigationType)navigationType
 {
-	self.rotating = NO;
-
-	if (self.hasAnchor && self.currentURL && request.URL)
+	if (!self.isReloading && self.hasAnchor && self.currentURL && request.URL)
 	{
 		NSString* currentURL = self.currentURL.relativeString;
 		NSString* requestURL = request.URL.relativeString;
 		if ([currentURL isEqualToString:requestURL])
+		{
+			if (self.isRotating)
+				[self resetStandardXoomOffsetInScrollView:webView.scrollView];
+			self.rotating = NO;
 			return NO;
+		}
 	}
+	self.rotating = NO;
 	self.currentURL = request.URL;
 
 	return YES;
@@ -238,35 +278,34 @@
 
 - (void)webViewDidFinishLoad:(UIWebView *)webView {
 	assert(webView == self.webView);
-	if (self.isRotating)
-		self.rotating = NO;
+	// the beginning of the bracket can't occur in webViewDidStartLoad: ,
+	// because when the following line is placed there, scrolling fails completely!!!
+	[self turnOffAutoScale];	// bracket: turns off auto-scaling while zooming
+
+	NSString* jsResult = [webView stringByEvaluatingJavaScriptFromString:JS_GET_BODY_MAX_WIDTH];
+	if (![jsResult isNonEmpty])
+		self.contentScale = 100;
 	else
+		self.contentScale = jsResult.floatValue;
+
+	__weak UIScrollView* scrollView = webView.scrollView;
+	self.scrollViewInitialContentSize = scrollView.contentSize;
+	self.xoomScale = self.scrollViewInitialContentSize.width / scrollView.frame.size.width;
+	[scrollView setZoomScale:self.defaultXoomScale/self.xoomScale animated:YES];
+
+	NSTimeInterval duration = self.isReloading ? 1 : .2;
+	if (!self.isReloading)
 	{
-		// the beginning of the bracket can't occur in webViewDidStartLoad: ,
-		// because when the following line is placed there, scrolling fails completely!!!
-		webView.scalesPageToFit	= NO;	// bracket: turns off auto-scaling while zooming
-
-		NSString* jsResult = [webView stringByEvaluatingJavaScriptFromString:JS_GET_BODY_MAX_WIDTH];
-		if (![jsResult isNonEmpty])
-			self.contentScale = 100;
-		else
-			self.contentScale = jsResult.floatValue;
-
-		__weak UIScrollView* scrollView = webView.scrollView;
-		self.scrollViewInitialContentSize = scrollView.contentSize;
-		self.xoomScale = self.scrollViewInitialContentSize.width / scrollView.frame.size.width;
-		[scrollView setZoomScale:self.defaultXoomScale/self.xoomScale animated:YES];
 		scrollView.contentOffset = CGPointZero;
 		self.contentVerticalOffsetPct = 0;
-
-		[UIView animateWithDuration:0.15 delay:0.1
-							options:UIViewAnimationOptionOverrideInheritedDuration
-						 animations:^{ webView.alpha = 1; }
-						 completion:nil];
-
-		// needs to be turned back on, or scrolling will fail in the next load to this webView
-		webView.scalesPageToFit = YES;	// bracket: turn back on auto-scaling after zooming
 	}
+
+	[UIView animateWithDuration:duration delay:0.1 options:UIViewAnimationOptionCurveEaseIn
+					 animations:^{ webView.alpha = 1; }
+					 completion:nil];
+
+	// needs to be turned back on, or scrolling will fail in the next load to this webView
+	[self turnOnAutoScale];	// bracket: turn back on auto-scaling after zooming
 }
 
 @end

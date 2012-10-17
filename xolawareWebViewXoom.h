@@ -15,7 +15,7 @@
 
 - (id)initWithWebView:(UIWebView*)webView;
 
-- (void)didRotate;
+- (void)didRotate:(UIInterfaceOrientation)fromOrientation;
 - (void)willRotate;
 
 @end
