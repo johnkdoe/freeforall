@@ -18,4 +18,6 @@
 - (void)didRotate;
 - (void)willRotate;
 
+- (void)removeOrRotateAnchorBaseURL:(NSURL *)urlWithoutAnchor;
+
 @end
