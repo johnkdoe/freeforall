@@ -15,7 +15,9 @@
 
 - (id)initWithWebView:(UIWebView*)webView;
 
-- (void)didRotate:(UIInterfaceOrientation)fromOrientation;
+- (void)didRotate;
 - (void)willRotate;
+
+- (void)removeOrRotateAnchorBaseURL:(NSURL *)urlWithoutAnchor;
 
 @end
