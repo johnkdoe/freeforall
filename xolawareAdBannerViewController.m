@@ -79,7 +79,16 @@
      bannerViewActionDidFinish:, and request a layout update if necessary.
  - comment out BannerViewActionWillBegin/BannerViewActionDidFinish notification names for now
  - also comment out the notifications that get generated
-*/ 
+ - rename the default initializer to more properly reflect its nature as a general rotation
+   workaround delegate, and not simply specific to the backButtonDelegate
+ - rename the private property to rotationWorkaround from buttonDelegate to more properly
+   reflect its nature as a general workaround delegate
+ - set xolawareAdBannerViewActionRotationWorkaround's delegate protocol properties so that the
+   delegate can act properly when a rotation change while an adBannerViewAction was in progress.
+ - fix a bug in loadView, whereby _bannerContainerView was using its own bounds in its call to
+   its own default initializer.  uh, FAIL.
+
+*/
 
 #import "xolawareAdBannerViewController.h"
 #import <iAd/iAd.h>
@@ -94,9 +103,10 @@
 @property (readonly, nonatomic) UIImageView* bannerContainerImageView;
 @property (readonly, nonatomic) UIView* bannerContainerView;
 @property (strong, nonatomic)	ADBannerView* bannerView;
-@property (weak, nonatomic)		id<xolawareAdBannerViewActionRotationWorkaround> buttonDelegate;
 @property (strong, nonatomic)	UIViewController* contentController;
 @property (weak, nonatomic)		id<xolawareAdBannerViewContainerDataSource> dataSource;
+
+@property (weak, nonatomic)	id<xolawareAdBannerViewActionRotationWorkaround> rotationWorkaround;
 
 @property BOOL orientationUponBannerViewAction;
 
@@ -108,23 +118,22 @@
 @synthesize bannerContainerImageView = _bannerContainerImageView;
 @synthesize bannerContainerView = _bannerContainerView;
 @synthesize bannerView = _bannerView;
-@synthesize buttonDelegate = _buttonDelegate;
 @synthesize contentController = _contentController;
 @synthesize dataSource = _dataSource;
 @synthesize orientationUponBannerViewAction = _orientationWhenLeavingForAd;
 
-- (id)initWithDataSource:(id<xolawareAdBannerViewContainerDataSource>)dataSource
-   contentViewController:(UIViewController*)contentController
-	backupButtonDelegate:(id<xolawareAdBannerViewActionRotationWorkaround>)buttonDelegate
+- (id)	initWithDataSource:(id<xolawareAdBannerViewContainerDataSource>)dataSource
+	 contentViewController:(UIViewController*)contentController
+  adBannerRotationDelegate:(id<xolawareAdBannerViewActionRotationWorkaround>)workaroundDelegate
 {
     self = [super init];
     if (self != nil) {
         _bannerView = [[ADBannerView alloc] init];
         _bannerView.delegate = self;
 		_bannerView.currentContentSizeIdentifier = ADBannerContentSizeIdentifierPortrait;
-		_buttonDelegate = buttonDelegate;
         _contentController = contentController;
 		_dataSource = dataSource;
+		_rotationWorkaround = workaroundDelegate;
     }
     return self;
 }
@@ -140,9 +149,9 @@
 		assert(self.bannerView.frame.size.height + 6 == _bannerContainerImage.size.height);
 
 		_bannerContainerImageView = [[UIImageView alloc] initWithImage:_bannerContainerImage];
-		_bannerContainerImageView.alpha = .7;
+		_bannerContainerImageView.alpha = .7;	// this one's for john!
 
-		_bannerContainerView = [[UIView alloc] initWithFrame:_bannerContainerView.bounds];
+		_bannerContainerView = [[UIView alloc] initWithFrame:_bannerContainerImageView.bounds];
 		_bannerContainerView.backgroundColor = [UIColor whiteColor];
 		[self.bannerContainerView addSubview:_bannerContainerImageView];
 		[self.bannerContainerView addSubview:_bannerView];
@@ -223,7 +232,9 @@
 - (BOOL)bannerViewActionShouldBegin:(ADBannerView*)banner willLeaveApplication:(BOOL)willLeave {
 //	[[NSNotificationCenter defaultCenter] postNotificationName:BannerViewActionWillBegin
 //														object:self];
-	self.orientationUponBannerViewAction = self.contentController.interfaceOrientation;
+	self.rotationWorkaround.adBannerViewActionInProgress = YES;
+	self.rotationWorkaround.orientationBeforeiAdBannerAction
+	  = self.orientationUponBannerViewAction = self.contentController.interfaceOrientation;
     return YES;
 }
 
@@ -235,7 +246,7 @@
 	{
 		UISplitViewController* splitVC = (UISplitViewController*)self.contentController;
 		if (UIInterfaceOrientationIsPortrait(self.contentController.interfaceOrientation))
-			splitVC.masterBarButtonItem = self.buttonDelegate.backupMasterBarButtonItem;
+			splitVC.masterBarButtonItem = self.rotationWorkaround.backupMasterBarButtonItem;
 		else
 			splitVC.masterBarButtonItem = nil;
 		[splitVC.view setNeedsLayout];
