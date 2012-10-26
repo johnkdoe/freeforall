@@ -70,8 +70,13 @@
    portion of the screen.
    - to this end, add xolawareAdBannerViewContainerDataSource
    - change the init routine to initWithDataSource:contentViewController:
-
-*/ 
+ - comment out BannerViewActionWillBegin/BannerViewActionDidFinish notification names for now
+ - rename the default initializer to more properly reflect its nature as a general rotation
+   workaround delegate, and not simply specific to the backButtonDelegate
+ - add protocol properties to the xolawareAdBannerViewActionRotationWorkaround so that a detail
+   view controller can access them to determine rotation change while an adBannerViewAction was
+   in progress.
+*/
 
 
 #import <UIKit/UIKit.h>
@@ -81,16 +86,20 @@
 @end
 
 @protocol xolawareAdBannerViewActionRotationWorkaround
+
 @property (readonly, nonatomic) UIBarButtonItem* backupMasterBarButtonItem;
+@property (nonatomic, getter = isAdBannerViewActionInProgress) BOOL adBannerViewActionInProgress;
+@property (nonatomic) UIInterfaceOrientation orientationBeforeiAdBannerAction;
+
 @end
 
-extern NSString * const BannerViewActionWillBegin;
-extern NSString * const BannerViewActionDidFinish;
+//extern NSString * const BannerViewActionWillBegin;
+//extern NSString * const BannerViewActionDidFinish;
 
 @interface xolawareAdBannerViewController : UIViewController
 
-- (id)initWithDataSource:(id<xolawareAdBannerViewContainerDataSource>)dataSource
-   contentViewController:(UIViewController*)contentController
-	backupButtonDelegate:(id<xolawareAdBannerViewActionRotationWorkaround>)buttonDelegate;
+- (id)	initWithDataSource:(id<xolawareAdBannerViewContainerDataSource>)dataSource
+	 contentViewController:(UIViewController*)contentController
+  adBannerRotationDelegate:(id<xolawareAdBannerViewActionRotationWorkaround>)workaroundDelegate;
 
 @end
