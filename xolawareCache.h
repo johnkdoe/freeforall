@@ -12,6 +12,8 @@
 
 - (id)initWithCacheDir:(NSString*)cacheDir;
 
++ (void)clearFilesInCacheDir:(NSString*)cacheDir;
+
 - (BOOL)createFile:(NSString*)file contents:(NSData*)contents;
 - (BOOL)isFileInCache:(NSString*)file;
 - (NSURL*)urlForCacheFile:(NSString*)file;
