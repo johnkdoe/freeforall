@@ -15,8 +15,19 @@
 
 - (id)initWithWebView:(UIWebView*)webView;
 
+/**
+ *	the ViewController using this companion is expected to invoke these functions in the
+ *	appropriate will/did life cycle rotation functions.
+ */
+
 - (void)didRotate;
 - (void)willRotate;
+
+
+/**
+ *	the ViewController using this companion is expected to invoke this whenever removing
+ *	or rotating a URL containing an anchor.
+ */
 
 - (void)removeOrRotateAnchorBaseURL:(NSURL *)urlWithoutAnchor;
 
