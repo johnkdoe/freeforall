@@ -20,6 +20,24 @@ static NSURL* _htmlCacheDirURL;
 	return _htmlCacheDirURL;
 }
 
+
++ (void)clearFilesInCacheDir:(NSString*)cacheDir {
+	__weak NSFileManager* fileMgr = NSFileManager.defaultManager;
+	NSString* cacheDirPath
+	  = [xolawareCache.htmlCacheDirURL.path stringByAppendingPathComponent:cacheDir];
+	NSDirectoryEnumerator* dirIter = [fileMgr enumeratorAtPath:cacheDirPath];
+	NSError* err = nil;
+
+	NSString* file;
+	while (file = [dirIter nextObject])
+	{
+		NSString* fileToDelete = [cacheDirPath stringByAppendingPathComponent:file];
+		NSLog(@"deleting file %@", fileToDelete);
+		if (![fileMgr removeItemAtPath:fileToDelete error:&err] && err)
+			NSLog(@"oops: %@", err);
+	}
+}
+
 - (id)initWithCacheDir:(NSString*)cacheDir {
 	NSString* cacheDirPath
 	  = [xolawareCache.htmlCacheDirURL.path stringByAppendingPathComponent:cacheDir];
