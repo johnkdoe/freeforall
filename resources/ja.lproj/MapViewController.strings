@@ -1,0 +1,11 @@
+/* 
+  MapViewController.strings
+  voyeur
+
+  Created by me on 2012.07.13.
+  Copyright (c) 2012 xolaware. All rights reserved.
+*/
+
+"map" = "標準";
+"satellite" = "航空写真";	// aerial photo
+"hybrid" = "地図+写真";	// map+photo

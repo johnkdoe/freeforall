@@ -1,15 +1,22 @@
 //
 //  UISplitViewController+MasterDetailUtilities.h
-//  theGRID
+//  xolawareUI
 //
 //  Created by me on 2012.04.22.
-//  Copyright (c) 2012 xolaware. All rights reserved.
-//
+
+#include "xolawareOpenSourceCopyright.h"	//  Copyright (c) 2012 xolaware.
 
 #import <UIKit/UIKit.h>
 
 @interface UISplitViewController (MasterDetailUtilities)
-- (UIViewController*)masterUIViewController;
+
+@property (nonatomic) UIBarButtonItem* masterBarButtonItem;
+
 - (UIViewController*)detailUIViewController;
+- (UIViewController*)masterUIViewController;
+
 - (UITabBarController*)masterTabBarController;
+
+- (NSString*)masterTitle;
+
 @end
