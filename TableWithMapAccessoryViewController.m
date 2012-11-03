@@ -46,7 +46,7 @@
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
 	{
 		_systemLocaleFormatter.dateStyle = NSDateFormatterShortStyle;
-		if (UIDeviceOrientationIsPortrait([[UIDevice currentDevice] orientation]))
+		if (UIDeviceOrientationIsPortrait(self.interfaceOrientation))
 			_systemLocaleFormatter.timeStyle = NSDateFormatterShortStyle;
 		else
 			_systemLocaleFormatter.timeStyle = NSDateFormatterMediumStyle;
