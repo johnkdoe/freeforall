@@ -10,7 +10,7 @@
 @interface FlipsideViewController () <UIWebViewDelegate>
 #if __IPHONE_OS_VERSION_MIN_REQUIRED <= __IPHONE_4_3
 {
-	UIInterfaceOrientation originalOrientation;
+	UIInterfaceOrientation* _originalOrientation;
 }
 #endif
 
@@ -44,6 +44,13 @@
 @synthesize webView;
 
 #if __IPHONE_OS_VERSION_MIN_REQUIRED <= __IPHONE_4_3
+
+- (void)setOriginalOrientation:(UIInterfaceOrientation)orientation {
+	if (_originalOrientation)	free(_originalOrientation);
+	_originalOrientation = (UIInterfaceOrientation*)malloc(sizeof(UIInterfaceOrientation));
+	*_originalOrientation = orientation;
+}
+
 - (UITapGestureRecognizer*)tapRecognizer {
 	if (!_tapRecognizer)
 		_tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self 
@@ -81,7 +88,7 @@
 #if __IPHONE_OS_VERSION_MIN_REQUIRED > __IPHONE_4_3
 		UIScrollView* webScrollView = self.webView.scrollView;
 #else
-		originalOrientation = [[UIDevice currentDevice] orientation];
+		[self setOriginalOrientation:self.interfaceOrientation];
 		BOOL iOS5plus = [self.webView respondsToSelector:@selector(scrollView)];
 		UIScrollView* webScrollView
 		  = iOS5plus ? self.webView.scrollView : (id)[self.webView.subviews objectAtIndex:0];
@@ -180,7 +187,7 @@
 	// view from being rotated from anything but the orientation at startup
 	if (UIUserInterfaceIdiomPhone == [[UIDevice currentDevice] userInterfaceIdiom]
 		&& ![self.webView respondsToSelector:@selector(scrollView)])
-		return originalOrientation ? originalOrientation == interfaceOrientation : YES;
+		return _originalOrientation ? *_originalOrientation == interfaceOrientation : YES;
 #endif
 	return YES;
 }
