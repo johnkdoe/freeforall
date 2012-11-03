@@ -10,9 +10,15 @@
 
 @implementation NSString (Utilities)
 
-- (BOOL)isNonEmpty
-{
+- (BOOL)isNonEmpty {
 	return ![self isEqualToString:@""];
+}
+
+- (NSURL*)urlForMainBundleResourceHTML {
+	NSString* resPath = [[NSBundle mainBundle] pathForResource:self ofType:@"html"];
+	if (resPath)
+		return [NSURL fileURLWithPath:resPath];
+	return nil;
 }
 
 @end

@@ -33,6 +33,7 @@
 
 @property (readonly)	float minimumXoomScale;
 @property (readonly)	float maximumXoomScale;
+@property (readonly)	UIInterfaceOrientation interfaceOrientation;
 @property (readonly)	NSTimeInterval postXoomDelay;
 
 @property (readonly, getter = isRuntimePre_6_0)		BOOL	runtimePre_6_0;
@@ -179,6 +180,10 @@
 	return self.defaultXoomScale;
 }
 
+- (UIInterfaceOrientation)interfaceOrientation {
+	return UIApplication.sharedApplication.statusBarOrientation;
+}
+
 /**
  *	this function returns slightly different delays based upon internal
  *	properties established based on the length of execution time they take
@@ -196,12 +201,11 @@
  */
 
 - (void)resetDefaultXoomScale {
-	__weak UIDevice* device = UIDevice.currentDevice;
-	if (self.isRuntimePre_6_0 && (device.userInterfaceIdiom == UIUserInterfaceIdiomPad
-								  || UIInterfaceOrientationIsPortrait(device.orientation)))
-		_defaultXoomScale = XOLAWARE_PRE_IOS_6_0_DEFAULT_XOOM;
-	else
-		_defaultXoomScale = 1.0;
+	BOOL useBiggerDefault
+	  = self.isRuntimePre_6_0
+		&& (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad
+			|| UIInterfaceOrientationIsPortrait(self.interfaceOrientation));
+	_defaultXoomScale = useBiggerDefault ? XOLAWARE_PRE_IOS_6_0_DEFAULT_XOOM : 1.0;
 #if XOLAWARE_DEBUG_WEBVIEW
 	NSLog(@"dXS\t- resetting defaultXoomScale=%g", _defaultXoomScale);
 #endif
@@ -242,10 +246,10 @@
  */
 
 - (void)rotateXoomScale {
-	__weak UIDevice* device = UIDevice.currentDevice;
-	if (self.isRuntimePre_6_0 && device.userInterfaceIdiom == UIUserInterfaceIdiomPhone)
+	__weak UIDevice* currentDevice = UIDevice.currentDevice;
+	if (self.isRuntimePre_6_0 && currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone)
 	{
-		if (UIInterfaceOrientationIsPortrait(device.orientation))
+		if (UIInterfaceOrientationIsPortrait(self.interfaceOrientation))
 			self.xoomScale *= XOLAWARE_PRE_IOS_6_0_DEFAULT_XOOM;
 		else
 			self.xoomScale /= XOLAWARE_PRE_IOS_6_0_DEFAULT_XOOM;
