@@ -21,4 +21,20 @@
 	return nil;
 }
 
+- (BOOL)hasCharacterInSet:(NSCharacterSet*)charSet {
+	return NSNotFound != [self rangeOfCharacterFromSet:charSet].location;
+}
+
+- (BOOL)hasNewline {
+	return [self hasCharacterInSet:[NSCharacterSet newlineCharacterSet]];
+}
+
+- (BOOL)hasWhitespace {
+	return [self hasCharacterInSet:[NSCharacterSet whitespaceCharacterSet]];
+}
+
+- (BOOL)hasWhitespaceOrNewline {
+	return [self hasCharacterInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+}
+
 @end

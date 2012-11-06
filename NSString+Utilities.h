@@ -15,4 +15,8 @@
 @interface NSString (Utilities)
 - (BOOL)isNonEmpty;
 - (NSURL*)urlForMainBundleResourceHTML;
+
+- (BOOL)hasNewline;
+- (BOOL)hasWhitespace;
+- (BOOL)hasWhitespaceOrNewline;
 @end
