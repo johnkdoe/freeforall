@@ -3,8 +3,8 @@
 //  athlete
 //
 //  Created by kb on 2012.10.30.
-//  Copyright (c) 2012 kb. All rights reserved.
-//
+
+#import "xolawareOpenSourceCopyright.h"
 
 #import "UpsideDownRotation_6_0.h"
 
