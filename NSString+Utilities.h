@@ -19,6 +19,7 @@
 
 - (NSURL*)urlForMainBundleResourceHTML;
 
+- (BOOL)hasEmailTraits;
 - (BOOL)hasNewline;
 - (BOOL)hasWhitespace;
 - (BOOL)hasWhitespaceOrNewline;
