@@ -14,6 +14,10 @@
 	return ![self isEqualToString:@""];
 }
 
+- (NSString*)stringByLocalizingThenAppending:(NSString*)stringToAppend {
+	return [NSLocalizedString(self, nil) stringByAppendingString:stringToAppend];
+}
+
 - (NSURL*)urlForMainBundleResourceHTML {
 	NSString* resPath = [[NSBundle mainBundle] pathForResource:self ofType:@"html"];
 	if (resPath)

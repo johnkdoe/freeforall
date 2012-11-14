@@ -14,6 +14,9 @@
 
 @interface NSString (Utilities)
 - (BOOL)isNonEmpty;
+
+- (NSString*)stringByLocalizingThenAppending:(NSString*)stringToAppend;
+
 - (NSURL*)urlForMainBundleResourceHTML;
 
 - (BOOL)hasNewline;
