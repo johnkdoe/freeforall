@@ -8,10 +8,13 @@
 
 #import <UIKit/UIKit.h>
 
+@protocol EditableObjectArrayDataSource
+@property (strong, nonatomic) NSArray* editableObjects;
+@end
+
 @interface EditableObjectArrayTableViewController : UITableViewController
 
-@property (strong, nonatomic) NSArray* objects;
-- (void)clearObjectsWithoutReload;
+@property (strong, nonatomic)	id<EditableObjectArrayDataSource> editableObjectsDataSource;
 
 // override these including a call to [super …] to do this combined with syncing with server
 - (void)removeObjectFromObjects:(id)object;
