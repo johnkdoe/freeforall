@@ -15,8 +15,7 @@
 #import "SplitViewTitle.h"
 
 @interface TableWithMapAccessoryViewController ()
-	<UIPopoverControllerDelegate, UITableViewDataSource, UITableViewDelegate,
-	 MapViewControllerDelegate>
+	<UIPopoverControllerDelegate, MapViewControllerDelegate>
 
 @property (strong, nonatomic) UIPopoverController *flipsidePopoverController;
 @property (strong, nonatomic) NSString* unlocalizedTitle;
@@ -192,11 +191,8 @@
 	{
 		NSMutableArray* objectsMinusThis = _objects.mutableCopy;
 		[objectsMinusThis removeObjectAtIndex:indexPath.row];
-		[tableView beginUpdates];
-		[tableView deleteRowsAtIndexPaths:[NSArray arrayWithObject:indexPath] 
-						 withRowAnimation:YES];
 		_objects = objectsMinusThis;
-		[tableView endUpdates];
+		[tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:YES];
 	}
 }
 
