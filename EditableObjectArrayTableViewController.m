@@ -92,7 +92,8 @@
 	if (editingStyle == UITableViewCellEditingStyleDelete)
 	{
 		[self removeObjectFromObjectsAtIndex:indexPath.row];
-		[tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:YES];
+		[tableView deleteRowsAtIndexPaths:@[indexPath]
+						 withRowAnimation:UITableViewRowAnimationAutomatic];
 	}
 }
 
