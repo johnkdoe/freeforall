@@ -14,8 +14,12 @@
 
 @interface NSString (Utilities)
 - (BOOL)isNonEmpty;
+
+- (NSString*)stringByLocalizingThenAppending:(NSString*)stringToAppend;
+
 - (NSURL*)urlForMainBundleResourceHTML;
 
+- (BOOL)hasEmailTraits;
 - (BOOL)hasNewline;
 - (BOOL)hasWhitespace;
 - (BOOL)hasWhitespaceOrNewline;

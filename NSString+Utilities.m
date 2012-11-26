@@ -14,6 +14,10 @@
 	return ![self isEqualToString:@""];
 }
 
+- (NSString*)stringByLocalizingThenAppending:(NSString*)stringToAppend {
+	return [NSLocalizedString(self, nil) stringByAppendingString:stringToAppend];
+}
+
 - (NSURL*)urlForMainBundleResourceHTML {
 	NSString* resPath = [[NSBundle mainBundle] pathForResource:self ofType:@"html"];
 	if (resPath)
@@ -23,6 +27,15 @@
 
 - (BOOL)hasCharacterInSet:(NSCharacterSet*)charSet {
 	return NSNotFound != [self rangeOfCharacterFromSet:charSet].location;
+}
+
+- (BOOL)hasEmailTraits {
+	NSUInteger atSign = [self rangeOfString:@"@"].location;
+	NSUInteger dot = [self rangeOfString:@"." options:NSBackwardsSearch].location;
+
+	// cursory check, this should catch a bunch
+	return NSNotFound != atSign && NSNotFound != dot
+		&& atSign != 0 && atSign < (dot-1) && dot < self.length-2;
 }
 
 - (BOOL)hasNewline {
