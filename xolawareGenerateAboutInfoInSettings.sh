@@ -22,7 +22,9 @@
 set -e
 
 PLISTBUDDYCMD="/usr/libexec/PlistBuddy -c"
+SRC_INFO_PLIST=${SRCROOT}/${INFOPLIST_FILE}
 
-CFBundleShortVersionString=`${PLISTBUDDYCMD} "Print :CFBundleShortVersionString" ${SRCROOT}/${PRODUCT_NAME}/${TARGET_NAME}-Info.plist`
-CFBundleVersion=`${PLISTBUDDYCMD} "Print :CFBundleVersion" ${SRCROOT}/${PRODUCT_NAME}/${TARGET_NAME}-Info.plist`
-${PLISTBUDDYCMD} "Set :PreferenceSpecifiers:1:DefaultValue '${CFBundleShortVersionString} (b${CFBundleVersion})'" $1
+CFBSVS=`exec -c ${PLISTBUDDYCMD} "Print :CFBundleShortVersionString" ${SRC_INFO_PLIST}`
+CFBV=`exec -c ${PLISTBUDDYCMD} "Print :CFBundleVersion" ${SRC_INFO_PLIST}`
+echo exec -c ${PLISTBUDDYCMD} "Set :PreferenceSpecifiers:1:DefaultValue '${CFBSVS} (b${CFBV})'" $1
+${PLISTBUDDYCMD} "Set :PreferenceSpecifiers:1:DefaultValue '${CFBSVS} (b${CFBV})'" $1
