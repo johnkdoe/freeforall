@@ -2,7 +2,7 @@
 #
 # should be run as the last script in Build Phases, after the Copy Bundle Resources Phase
 
-echo '-- Manual Restore $INFOPLIST_FILE Script --'
+echo "-- Manual Restore $INFOPLIST_FILE Script --"
 
 ROOT_PLIST=${PROJECT}/Resources/Settings.bundle/Root.plist
 
