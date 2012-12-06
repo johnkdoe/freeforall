@@ -50,4 +50,21 @@
 	return [self hasCharacterInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 }
 
++ (NSString*)generateCompactGUID {
+	NSString* uuidStr;
+	if (UIDevice.currentDevice.systemVersion.floatValue >= 6.0)
+		uuidStr = [[NSUUID UUID] UUIDString];
+#if __IPHONE_OS_VERSION_MIN_REQUIRED < __IPHONE_6_0
+	else // if the above check kicks in, then we're no longer even building for pre-iOS6
+	{
+		CFUUIDRef u = CFUUIDCreate(NULL);
+		CFStringRef s = CFUUIDCreateString(NULL, u);
+		CFRelease(u);
+		uuidStr = ((__bridge NSString *)s).copy;
+		CFRelease(s);
+	}
+#endif
+	return [[uuidStr stringByReplacingOccurrencesOfString:@"-" withString:@""] lowercaseString];
+}
+
 @end

@@ -23,4 +23,7 @@
 - (BOOL)hasNewline;
 - (BOOL)hasWhitespace;
 - (BOOL)hasWhitespaceOrNewline;
+
++ (NSString*)generateCompactGUID;
+
 @end
