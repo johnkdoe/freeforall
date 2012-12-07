@@ -25,6 +25,21 @@
 	return nil;
 }
 
+- (NSDictionary*)dictionaryInterpretingContentsAsHttpQuery {
+	NSArray* parameters = [self componentsSeparatedByString:@"&"];
+	if (2 > parameters.count || 0 != parameters.count % 2)
+		return nil;
+	NSMutableDictionary* items = [NSMutableDictionary dictionaryWithCapacity:parameters.count];
+	for (NSString* parameter in parameters)
+	{
+		NSArray* parameterKeyEqualValue = [parameter componentsSeparatedByString:@"="];
+		if (2 != parameterKeyEqualValue.count)
+			continue;	// skip this one w.r.t inserting it in the dictionary
+		[items setValue:parameterKeyEqualValue[1] forKey:parameterKeyEqualValue[0]];
+	}
+	return items.count ? items.copy : nil;
+}
+
 - (BOOL)hasCharacterInSet:(NSCharacterSet*)charSet {
 	return NSNotFound != [self rangeOfCharacterFromSet:charSet].location;
 }
@@ -50,7 +65,11 @@
 	return [self hasCharacterInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 }
 
-+ (NSString*)generateCompactGUID {
+- (NSString*)uuidStringByCompactingExistingUUID {
+	return [[self stringByReplacingOccurrencesOfString:@"-" withString:@""] lowercaseString];
+}
+
++ (NSString*)generateCompactUUID {
 	NSString* uuidStr;
 	if (UIDevice.currentDevice.systemVersion.floatValue >= 6.0)
 		uuidStr = [[NSUUID UUID] UUIDString];
@@ -64,7 +83,7 @@
 		CFRelease(s);
 	}
 #endif
-	return [[uuidStr stringByReplacingOccurrencesOfString:@"-" withString:@""] lowercaseString];
+	return [uuidStr uuidStringByCompactingExistingUUID];
 }
 
 @end

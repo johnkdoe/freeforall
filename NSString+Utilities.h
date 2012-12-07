@@ -19,11 +19,15 @@
 
 - (NSURL*)urlForMainBundleResourceHTML;
 
+- (NSString*)uuidStringByCompactingExistingUUID;
+
+- (NSDictionary*)dictionaryInterpretingContentsAsHttpQuery;
+
 - (BOOL)hasEmailTraits;
 - (BOOL)hasNewline;
 - (BOOL)hasWhitespace;
 - (BOOL)hasWhitespaceOrNewline;
 
-+ (NSString*)generateCompactGUID;
++ (NSString*)generateCompactUUID;
 
 @end
