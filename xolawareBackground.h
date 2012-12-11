@@ -1,6 +1,6 @@
 //
-//  EmptyClass.h
-//  voyeur
+//  xolawareBackground.h
+//  xolawareUI
 //
 //  Created by me on 2012.06.28.
 

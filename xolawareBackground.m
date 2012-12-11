@@ -1,6 +1,6 @@
 //
 //  xolawareBackground.m
-//  voyeur
+//  xolawareUI
 //
 //  Created by me on 2012.06.28.
 
