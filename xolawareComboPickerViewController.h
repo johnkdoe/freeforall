@@ -9,7 +9,7 @@
 #import <UIKit/UIKit.h>
 
 @interface xolawareComboPickerViewController : UIViewController
-	<UIPickerViewDataSource, UIPickerViewDelegate>
+	<UIPickerViewDataSource, UIPickerViewDelegate, UIGestureRecognizerDelegate>
 
 // in storyboard, hook up a wrapper around the container for the picker so swipe-in can work
 @property (readonly, nonatomic) IBOutlet UIView* contentView;

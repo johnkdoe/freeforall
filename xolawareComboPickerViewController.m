@@ -8,7 +8,7 @@
 
 #import "xolawareComboPickerViewController.h"
 
-@interface xolawareComboPickerViewController () <UIGestureRecognizerDelegate>
+@interface xolawareComboPickerViewController ()
 @property (weak, nonatomic) IBOutlet UIPickerView* comboPicker;
 @property (weak, nonatomic) IBOutlet UIView* comboPickerContainer;
 @end
