@@ -15,7 +15,7 @@
 @property (weak, nonatomic) IBOutlet UILabel* itddTitle;
 @property (weak, nonatomic) IBOutlet UILabel* itddDescription;
 
-@property (strong, nonatomic) NSString* photoId;
+@property (strong, nonatomic) NSString* imageId;
 
 - (BOOL)isEqual:(id)object;
 

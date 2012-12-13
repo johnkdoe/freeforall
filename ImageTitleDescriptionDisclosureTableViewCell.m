@@ -15,14 +15,14 @@
 @synthesize itddTitle = _itddTitle;
 @synthesize itddDescription = _itddDescription;
 
-@synthesize photoId = _photoId;
+@synthesize imageId = _imageId;
 
 static CGFloat _storyboardFontSize;
 
 - (BOOL)isEqual:(id)object
 {
 	return [object isKindOfClass:[ImageTitleDescriptionDisclosureTableViewCell class]]
-		&& [[object photoId] isEqualToString:self.photoId];
+		&& [[object imageId] isEqualToString:self.imageId];
 }
 
 - (void)normalizeFontSizeUsingCellAccessoryType:(UITableViewCellAccessoryType)reusedType
