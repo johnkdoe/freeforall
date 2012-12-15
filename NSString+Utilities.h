@@ -8,6 +8,9 @@
 
 #import <Foundation/Foundation.h>
 
+#define NSStringsEquivalent(s, o)\
+		(s == o || (!s.isNonEmpty && !o.isNonEmpty) || [s isEqualToString:o])
+
 #define synthesizeLazyLocalizedString(prop, val) \
 @synthesize prop = _##prop; \
 - (NSString*)prop { if (!_##prop) _##prop = NSLocalizedString(val, nil); return _##prop; }
