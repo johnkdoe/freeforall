@@ -10,22 +10,23 @@
 
 #import "UISplitViewController+MasterDetailUtilities.h"
 
-@interface TabBarInSplitViewMasterViewController () <UISplitViewControllerDelegate>
-
-@end
-
 @implementation TabBarInSplitViewMasterViewController
 
 #pragma mark - UIViewController @property implementation overrides
 
 - (NSString*)title {
-	if (((UINavigationController*)self.selectedViewController).topViewController.title)
-		return ((UINavigationController*)self.selectedViewController).topViewController.title;
+	if (self.visibleViewController.title)
+		return self.visibleViewController.title;
 	if (self.selectedViewController.title)
 		return self.selectedViewController.title;
 	return [[[self.viewControllers objectAtIndex:0] tabBarItem] title];
 }
 
+#pragma mark - public method implementations
+
+- (UIViewController*)visibleViewController {
+	return ((UINavigationController*)self.selectedViewController).topViewController;
+}
 
 #pragma mark - UISplitViewControllerDelegate protocol implementation
 #pragma mark @optional
@@ -38,9 +39,9 @@
 		return NO;
 	if (![self.selectedViewController respondsToSelector:@selector(topViewController)])
 		return YES;
-	if (![[(id)self.selectedViewController topViewController] respondsToSelector:@selector(tableView)])
+	if (![self.visibleViewController respondsToSelector:@selector(tableView)])
 		return YES;
-	return ![(id)[(id)self.selectedViewController topViewController] tableView].isEditing;
+	return !((UITableViewController*)self.visibleViewController).tableView.isEditing;
 }
 
 - (void)splitViewController:(UISplitViewController*)splitController

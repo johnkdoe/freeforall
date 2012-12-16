@@ -9,5 +9,5 @@
 #import <UIKit/UIKit.h>
 
 @interface TabBarInSplitViewMasterViewController : UITabBarController
-
+@property (readonly, nonatomic) UIViewController* visibleViewController;
 @end
