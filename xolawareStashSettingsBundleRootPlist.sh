@@ -10,7 +10,7 @@ ROOT_PLIST=${PROJECT}/Resources/Settings.bundle/Root.plist
 set -e
 
 # a fallback in case the user has made changes to the file
-if [ `git status --porcelain ${ROOT_PLIST}]|wc -l` -gt 0 ]; then
+if [ `git status --porcelain ${ROOT_PLIST} ]|wc -l` -gt 0 ]; then
 	echo cp -p ${ROOT_PLIST} ${TARGET_TEMP_DIR}
 	cp -p ${ROOT_PLIST} ${TARGET_TEMP_DIR}
 fi
