@@ -76,7 +76,7 @@
 	[_comboPickerContainer setCenter:viewForCenter.center];
 	[_comboPicker reloadComponent:0];
 	[_comboPicker selectRow:selectedRow inComponent:0 animated:NO];
-	[_comboPickerContainer setHidden:NO];
+	[_comboPicker setHidden:NO];
 	CGRect pickerHome = _comboPickerContainer.frame;
 	_comboPickerContainer.frame = CGRectMake(0-pickerHome.size.width, pickerHome.origin.y,
 											 pickerHome.size.width, pickerHome.size.height);
