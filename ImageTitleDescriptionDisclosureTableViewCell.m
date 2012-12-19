@@ -41,11 +41,10 @@ static CGFloat _storyboardFontSize;
 		}
 
 	CGFloat actualFontSize, minFontSize;
-	if ([self.itddTitle respondsToSelector:@selector(minimumScaleFactor)])
-		minFontSize = self.itddTitle.minimumScaleFactor * _storyboardFontSize;
-#if __IPHONE_OS_VERSION_MIN_REQUIRED < __IPHONE_6_0
-	else
-		minFontSize = self.itddTitle.minimumFontSize;
+#if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_6_0
+	minFontSize = self.itddTitle.minimumScaleFactor * _storyboardFontSize;
+#else
+	minFontSize = self.itddTitle.minimumFontSize;
 #endif
 	[self.itddTitle.text sizeWithFont:[titleFont fontWithSize:_storyboardFontSize]
 						  minFontSize:minFontSize
