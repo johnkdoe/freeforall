@@ -21,6 +21,7 @@
 // the names should explain what these do.
 - (void)pickerFadeAway;
 - (void)pickerFadeIn;
+- (void)pickerReload;
 - (void)pickerSwipeInWithSelectedRow:(NSInteger)selectedRow viewForCenter:(UIView*)view;
 
 @end

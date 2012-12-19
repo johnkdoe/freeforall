@@ -71,6 +71,10 @@
 	[UIView animateWithDuration:0.1666666 animations:^{ _comboPickerContainer.alpha = 1; }];
 }
 
+- (void)pickerReload {
+	[_comboPicker reloadAllComponents];
+}
+
 - (void)pickerSwipeInWithSelectedRow:(NSInteger)selectedRow viewForCenter:(UIView*)viewForCenter
 {
 	[_comboPickerContainer setCenter:viewForCenter.center];
