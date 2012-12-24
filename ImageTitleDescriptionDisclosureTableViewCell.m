@@ -25,12 +25,8 @@ static CGFloat _storyboardFontSize;
 		&& [[object imageId] isEqualToString:self.imageId];
 }
 
-- (void)normalizeFontSizeUsingCellAccessoryType:(UITableViewCellAccessoryType)reusedType
+- (void)normalizeFont:(UILabel*)label accessoryType:(UITableViewCellAccessoryType)reusedType
 {
-	UIFont* titleFont = self.itddTitle.font;
-	if (!_storyboardFontSize)
-		_storyboardFontSize = titleFont.pointSize;	// set once and re-use
-
 	CGFloat widthAdjustment = 0;;
 	if (reusedType != self.accessoryType)
 		switch (self.accessoryType)
@@ -40,18 +36,31 @@ static CGFloat _storyboardFontSize;
 		  default:;
 		}
 
+	if (!_storyboardFontSize)
+		_storyboardFontSize = label.font.pointSize;	// set once and re-use
+
 	CGFloat actualFontSize, minFontSize;
 #if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_6_0
 	minFontSize = self.itddTitle.minimumScaleFactor * _storyboardFontSize;
 #else
 	minFontSize = self.itddTitle.minimumFontSize;
 #endif
-	[self.itddTitle.text sizeWithFont:[titleFont fontWithSize:_storyboardFontSize]
-						  minFontSize:minFontSize
-					   actualFontSize:&actualFontSize
-							 forWidth:self.itddTitle.frame.size.width+widthAdjustment-2
-						lineBreakMode:NSLineBreakByWordWrapping];
-	self.itddTitle.font = [titleFont fontWithSize:(CGFloat)((int)actualFontSize)];
+	[label.text sizeWithFont:[label.font fontWithSize:_storyboardFontSize]
+				 minFontSize:minFontSize
+			  actualFontSize:&actualFontSize
+					forWidth:label.frame.size.width+widthAdjustment-2
+			   lineBreakMode:NSLineBreakByWordWrapping];
+	label.font = [label.font fontWithSize:(CGFloat)((int)actualFontSize)];
+}
+
+- (void)normalizeTitleSizeUsingCellAccessoryType:(UITableViewCellAccessoryType)reusedType
+{
+	[self normalizeFont:self.itddTitle accessoryType:reusedType];
+}
+
+- (void)normalizeDescriptionSizeUsingCellAccessoryType:(UITableViewCellAccessoryType)reusedType
+{
+	[self normalizeFont:self.itddTitle accessoryType:reusedType];
 }
 
 @end

@@ -19,6 +19,7 @@
 
 - (BOOL)isEqual:(id)object;
 
-- (void)normalizeFontSizeUsingCellAccessoryType:(UITableViewCellAccessoryType)reusedType;
+- (void)normalizeTitleSizeUsingCellAccessoryType:(UITableViewCellAccessoryType)reusedType;
+- (void)normalizeDescriptionSizeUsingCellAccessoryType:(UITableViewCellAccessoryType)reusedType;
 
 @end
