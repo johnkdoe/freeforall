@@ -17,4 +17,11 @@
 	self.items = replacementToolbarItems.copy;
 }
 
+- (void)removeItemAtIndex:(NSUInteger)index
+{
+	NSMutableArray* replacementToolbarItems = self.items.mutableCopy;
+	[replacementToolbarItems removeObjectAtIndex:index];
+	self.items = replacementToolbarItems.copy;
+}
+
 @end

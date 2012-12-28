@@ -11,5 +11,6 @@
 @interface UIToolbar (ReplaceBarButtonItem)
 
 - (void)replaceItemAtIndex:(NSUInteger)index withBarButtonItem:(UIBarButtonItem*)barButtonItem;
+- (void)removeItemAtIndex:(NSUInteger)index;
 
 @end
