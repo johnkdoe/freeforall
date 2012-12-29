@@ -8,7 +8,7 @@
 
 #import "UIToolbar+ReplaceBarButtonItem.h"
 
-@implementation UIToolbar (ReplaceBarButtonItem)
+@implementation UIToolbar (ChangeItems)
 
 - (void)replaceItemAtIndex:(NSUInteger)index withBarButtonItem:(UIBarButtonItem*)barButtonItem
 {

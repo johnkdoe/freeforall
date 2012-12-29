@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface UIToolbar (ReplaceBarButtonItem)
+@interface UIToolbar (ChangeItems)
 
 - (void)replaceItemAtIndex:(NSUInteger)index withBarButtonItem:(UIBarButtonItem*)barButtonItem;
 - (void)removeItemAtIndex:(NSUInteger)index;
