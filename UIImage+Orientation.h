@@ -3,8 +3,8 @@
 //  athlete
 //
 //  Created by kb on 2013.01.02.
-//  Copyright (c) 2013 kb. All rights reserved.
-//
+
+#include "xolawareOpenSourceCopyright.h"	//  Copyright (c) 2013 xolaware.
 
 #import <UIKit/UIKit.h>
 
