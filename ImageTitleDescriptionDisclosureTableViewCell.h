@@ -12,6 +12,7 @@
 
 // the following are subviews of the content view.
 @property (weak, nonatomic) IBOutlet UIImageView* itddImageView;
+@property (weak, nonatomic) IBOutlet UIImageView* itddOverlayView;
 @property (weak, nonatomic) IBOutlet UILabel* itddTitle;
 @property (weak, nonatomic) IBOutlet UILabel* itddDescription;
 

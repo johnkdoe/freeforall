@@ -14,6 +14,7 @@
 @synthesize itddImageView = _itddImageView;
 @synthesize itddTitle = _itddTitle;
 @synthesize itddDescription = _itddDescription;
+@synthesize itddOverlayView = _itddOverlayView;
 
 @synthesize imageId = _imageId;
 
