@@ -94,9 +94,10 @@
 	// refreshArrow first, so that the refreshLabel can base it's X off of refreshArrow.frame
 	NSString* arrowImageName = self.arrowImageName;
 	_refreshArrow = [[UIImageView alloc] initWithImage:[UIImage imageNamed:arrowImageName]];
-	_refreshArrow.frame
-	  = CGRectMake(4, (floorf(refreshHeaderHeight - _tableView.rowHeight) / 2),
-				   27, _tableView.rowHeight);
+	CGFloat imageViewW = MIN(27, _refreshArrow.image.size.width);
+	CGFloat imageViewH = MIN(refreshHeaderHeight - 4, _refreshArrow.image.size.height);
+	_refreshArrow.contentMode = UIViewContentModeScaleAspectFill;
+	_refreshArrow.frame = CGRectMake(4, (floorf(imageViewH) / 2), imageViewW, imageViewH);
 
 	CGFloat refreshLabelX = _refreshArrow.frame.origin.x+_refreshArrow.frame.size.width+4;
 	CGFloat refreshLabelWidth = headerFrame.size.width - refreshLabelX - 4;
