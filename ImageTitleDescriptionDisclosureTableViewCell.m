@@ -15,7 +15,7 @@
 @synthesize itddTitle = _itddTitle;
 @synthesize itddDescription = _itddDescription;
 @synthesize itddOverlayView = _itddOverlayView;
-
+@synthesize itddDateLabel = _itddDateLabel;
 @synthesize imageId = _imageId;
 
 static CGFloat _storyboardFontSize;

@@ -15,6 +15,7 @@
 @property (weak, nonatomic) IBOutlet UIImageView* itddOverlayView;
 @property (weak, nonatomic) IBOutlet UILabel* itddTitle;
 @property (weak, nonatomic) IBOutlet UILabel* itddDescription;
+@property (weak, nonatomic) IBOutlet UILabel* itddDateLabel;
 
 @property (strong, nonatomic) NSString* imageId;
 
