@@ -16,6 +16,7 @@
 @property (weak, nonatomic) IBOutlet UILabel* itddTitle;
 @property (weak, nonatomic) IBOutlet UILabel* itddDescription;
 @property (weak, nonatomic) IBOutlet UILabel* itddDateLabel;
+@property (weak, nonatomic) IBOutlet UIActivityIndicatorView* spinner;
 
 @property (strong, nonatomic) NSString* imageId;
 
@@ -23,5 +24,8 @@
 
 - (void)normalizeTitleSizeUsingCellAccessoryType:(UITableViewCellAccessoryType)reusedType;
 - (void)normalizeDescriptionSizeUsingCellAccessoryType:(UITableViewCellAccessoryType)reusedType;
+
+- (void)startSpinner;
+- (void)stopSpinner;
 
 @end

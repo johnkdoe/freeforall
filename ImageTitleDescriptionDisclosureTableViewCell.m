@@ -17,6 +17,7 @@
 @synthesize itddOverlayView = _itddOverlayView;
 @synthesize itddDateLabel = _itddDateLabel;
 @synthesize imageId = _imageId;
+@synthesize spinner = _spinner;
 
 static CGFloat _storyboardFontSize;
 
@@ -62,6 +63,23 @@ static CGFloat _storyboardFontSize;
 - (void)normalizeDescriptionSizeUsingCellAccessoryType:(UITableViewCellAccessoryType)reusedType
 {
 	[self normalizeFont:self.itddTitle accessoryType:reusedType];
+}
+
+#pragma mark Spinner
+
+- (void)startSpinner
+{
+    if (!self.spinner) {
+        self.spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
+    }
+    _spinner.hidden = NO; 
+    [_spinner startAnimating];
+}
+
+- (void)stopSpinner
+{
+    [_spinner stopAnimating];
+    _spinner.hidden = YES;
 }
 
 @end
