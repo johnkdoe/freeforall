@@ -104,6 +104,8 @@ typedef enum {
 //reachabilityForLocalWiFi- checks whether a local wifi connection is available.
 + (xolawareReachability*)reachabilityForLocalWiFi;
 
++ (NSError*)canonicalNetworkUnreachableError;
+
 //Start listening for reachability notifications on the current run loop
 - (BOOL)startNotifier;
 - (void)stopNotifier;

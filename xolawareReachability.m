@@ -245,6 +245,12 @@ static void ReachabilityCallback(SCNetworkReachabilityRef target,
 	return retVal;
 }
 
++ (NSError*)canonicalNetworkUnreachableError {
+	return [NSError errorWithDomain:@"reachability" code:kCFURLErrorNotConnectedToInternet
+						   userInfo:@{@"error" : NSLocalizedString(@"network offline", nil)}];
+
+}
+
 #pragma mark Network Flag Handling
 
 - (NetworkStatus)localWiFiStatusForFlags:(SCNetworkReachabilityFlags)flags
