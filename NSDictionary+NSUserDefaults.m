@@ -20,7 +20,7 @@
 			[keys removeObject:key];
 			continue;
 		}
-		if ([obj isKindOfClass:[self class]] || [obj isKindOfClass:[NSArray class]])
+		if ([obj isKindOfClass:[NSDictionary class]] || [obj isKindOfClass:[NSArray class]])
 			[objects addObject:[obj deepCleanForDefaults]];
 		else
 			[objects addObject:obj];

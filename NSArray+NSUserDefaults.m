@@ -14,7 +14,7 @@
 	{
 		if ([obj isKindOfClass:[NSNull class]])
 			[result addObject:[NSData data]];	// sort of punting … will be empty NSData
-		else if ([obj isKindOfClass:[self class]] || [obj isKindOfClass:[NSDictionary class]])
+		else if ([obj isKindOfClass:[NSArray class]] || [obj isKindOfClass:[NSDictionary class]])
 			[result addObject:[obj deepCleanForDefaults]];
 		else
 			[result addObject:obj];
