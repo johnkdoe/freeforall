@@ -14,4 +14,10 @@
 	return mutableDictionary.copy;
 }
 
+- (NSDictionary*)withoutObjectWithKey:(id<NSCopying>)key {
+	NSMutableDictionary* mutableDictionary = self.mutableCopy;
+	[mutableDictionary removeObjectForKey:key];
+	return mutableDictionary.copy;
+}
+
 @end

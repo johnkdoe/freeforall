@@ -8,4 +8,5 @@
 
 @interface NSDictionary (Mutable)
 - (NSDictionary*)withObject:(id)object forKey:(id<NSCopying>)key;
+- (NSDictionary*)withoutObjectWithKey:(id<NSCopying>)key;
 @end
