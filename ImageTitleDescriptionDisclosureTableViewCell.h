@@ -18,7 +18,7 @@
 @property (weak, nonatomic) IBOutlet UILabel* itddDateLabel;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView* spinner;
 
-@property (strong, nonatomic) NSString* imageId;
+@property (strong, nonatomic) NSString* _id;
 
 - (BOOL)isEqual:(id)object;
 

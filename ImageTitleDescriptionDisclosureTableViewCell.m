@@ -11,20 +11,13 @@
 @implementation ImageTitleDescriptionDisclosureTableViewCell
 
 #pragma mark @synthesize
-@synthesize itddImageView = _itddImageView;
-@synthesize itddTitle = _itddTitle;
-@synthesize itddDescription = _itddDescription;
-@synthesize itddOverlayView = _itddOverlayView;
-@synthesize itddDateLabel = _itddDateLabel;
-@synthesize imageId = _imageId;
-@synthesize spinner = _spinner;
 
 static CGFloat _storyboardFontSize;
 
 - (BOOL)isEqual:(id)object
 {
 	return [object isKindOfClass:[ImageTitleDescriptionDisclosureTableViewCell class]]
-		&& [[object imageId] isEqualToString:self.imageId];
+		&& [[object _id] isEqualToString:__id];
 }
 
 - (void)normalizeFont:(UILabel*)label accessoryType:(UITableViewCellAccessoryType)reusedType
