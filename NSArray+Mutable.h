@@ -8,4 +8,5 @@
 
 @interface NSArray (Mutable)
 - (NSArray*)arrayByRemovingObject:(id)anObject;
+- (NSArray*)arrayWithoutObjectAtIndex:(NSUInteger)index;
 @end

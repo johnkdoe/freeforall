@@ -14,4 +14,10 @@
 	return mutableSelf.copy;
 }
 
+- (NSArray*)arrayWithoutObjectAtIndex:(NSUInteger)index {
+	NSMutableArray* mutableSelf = self.mutableCopy;
+	[mutableSelf removeObjectAtIndex:index];
+	return mutableSelf.copy;
+}
+
 @end
