@@ -62,17 +62,12 @@ static CGFloat _storyboardFontSize;
 
 - (void)startSpinner
 {
-    if (!self.spinner) {
-        self.spinner = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhite];
-    }
-    _spinner.hidden = NO; 
     [_spinner startAnimating];
 }
 
 - (void)stopSpinner
 {
     [_spinner stopAnimating];
-    _spinner.hidden = YES;
 }
 
 @end

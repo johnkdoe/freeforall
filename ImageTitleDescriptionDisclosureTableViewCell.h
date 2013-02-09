@@ -25,7 +25,4 @@
 - (void)normalizeTitleSizeUsingCellAccessoryType:(UITableViewCellAccessoryType)reusedType;
 - (void)normalizeDescriptionSizeUsingCellAccessoryType:(UITableViewCellAccessoryType)reusedType;
 
-- (void)startSpinner;
-- (void)stopSpinner;
-
 @end
