@@ -91,22 +91,19 @@
 	_refreshHeaderView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 	_refreshHeaderView.backgroundColor = [UIColor clearColor];
 
-	// refreshArrow first, so that the refreshLabel can base it's X off of refreshArrow.frame
+	CGRect labelFrame = CGRectMake(4, 0, headerFrame.size.width-4, refreshHeaderHeight);
+	_refreshLabel = [[UILabel alloc] initWithFrame:labelFrame];
+	_refreshLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+	_refreshLabel.backgroundColor = [UIColor clearColor];
+	_refreshLabel.font = [UIFont boldSystemFontOfSize:12.0];
+	_refreshLabel.textAlignment = UITextAlignmentCenter;
+
 	NSString* arrowImageName = self.arrowImageName;
 	_refreshArrow = [[UIImageView alloc] initWithImage:[UIImage imageNamed:arrowImageName]];
 	CGFloat imageViewW = MIN(27, _refreshArrow.image.size.width);
 	CGFloat imageViewH = MIN(refreshHeaderHeight - 4, _refreshArrow.image.size.height);
 	_refreshArrow.contentMode = UIViewContentModeScaleAspectFill;
 	_refreshArrow.frame = CGRectMake(4, (floorf(imageViewH) / 2), imageViewW, imageViewH);
-
-	CGFloat refreshLabelX = _refreshArrow.frame.origin.x+_refreshArrow.frame.size.width+4;
-	CGFloat refreshLabelWidth = headerFrame.size.width - refreshLabelX - 4;
-	CGRect labelFrame = CGRectMake(refreshLabelX, 0, refreshLabelWidth, refreshHeaderHeight);
-	_refreshLabel = [[UILabel alloc] initWithFrame:labelFrame];
-	_refreshLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-	_refreshLabel.backgroundColor = [UIColor clearColor];
-	_refreshLabel.font = [UIFont boldSystemFontOfSize:12.0];
-	_refreshLabel.textAlignment = UITextAlignmentCenter;
 
 	_refreshSpinner = [[UIActivityIndicatorView alloc]
 					   initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
