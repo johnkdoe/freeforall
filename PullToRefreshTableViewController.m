@@ -34,10 +34,6 @@
 #define REFRESH_HEADER_HEIGHT 52.0f
 
 @interface PullToRefreshTableViewController () <UIScrollViewDelegate>
-{
-	BOOL isDragging;
-    BOOL isLoading;
-}
 @end
 
 @implementation PullToRefreshTableViewController
@@ -117,12 +113,12 @@
 }
 
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
-	if (isLoading) return;
-	isDragging = YES;
+	if (_isLoading) return;
+	_isDragging = YES;
 }
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
-	if (isLoading)
+	if (_isLoading)
 	{
 		// Update the content inset, good for section headers
 		if (scrollView.contentOffset.y > 0)
@@ -130,7 +126,7 @@
 		else if (scrollView.contentOffset.y >= -self.refreshHeaderHeight)
 			_tableView.contentInset = UIEdgeInsetsMake(-scrollView.contentOffset.y, 0, 0, 0);
 	}
-	else if (isDragging && scrollView.contentOffset.y < 0)
+	else if (_isDragging && scrollView.contentOffset.y < 0)
 	{
 		// Update the arrow direction and label
 		[UIView animateWithDuration:0.25 animations:^{
@@ -150,8 +146,8 @@
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
-	if (isLoading) return;
-	isDragging = NO;
+	if (_isLoading) return;
+	_isDragging = NO;
 	if (scrollView.contentOffset.y <= -self.refreshHeaderHeight)
 	{
 		// Released above the header
@@ -160,7 +156,7 @@
 }
 
 - (void)startLoading {
-	isLoading = YES;
+	_isLoading = YES;
 
 	// Show the header
 	[UIView animateWithDuration:0.3 animations:^{
@@ -175,7 +171,7 @@
 }
 
 - (void)stopLoading {
-	isLoading = NO;
+	_isLoading = NO;
 
 	// Hide the header
 	[UIView animateWithDuration:0.3

@@ -56,6 +56,9 @@
 @property (nonatomic, copy) NSString *textRelease;
 @property (nonatomic, copy) NSString *textLoading;
 
+@property (nonatomic, readonly) BOOL isDragging;
+@property (nonatomic, readonly)	BOOL isLoading;
+
 - (void)startLoading;
 - (void)stopLoading;
 
