@@ -53,7 +53,7 @@
 	CGRect containerFrame = transitionView.frame;
 	tabBarFrame.origin.y = viewFrame.size.height - (hidden ? 0 : tabBarFrame.size.height);
 	containerFrame.size.height = viewFrame.size.height - (hidden ? 0 : tabBarFrame.size.height);
-	[UIView animateWithDuration:kAnimationDuration 
+	[UIView animateWithDuration:animated ? kAnimationDuration : 0
 					 animations:^{
 						 self.tabBar.frame = tabBarFrame;
 						 transitionView.frame = containerFrame;
