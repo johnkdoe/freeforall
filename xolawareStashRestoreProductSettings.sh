@@ -14,6 +14,8 @@ if [[ "$CONFIGURATION" == "Debug" ]]; then
 		echo mv ${TARGET_TEMP_DIR}/${INFOPLIST_BASENAME} ${PROJECT}
 		mv ${TARGET_TEMP_DIR}/${INFOPLIST_BASENAME} ${PROJECT}
 	elif [ `git status --porcelain ${SCRIPT_INFO_PLIST}|wc -l` -gt 0 ]; then
+		echo removing previous temporary copies of ${INFOPLIST_BASENAME}
+		rm /private/tmp/????.??.??-??????-${INFOPLIST_BASENAME}
 		INFOPLIST_DATE_PREFIX=`date +"%Y.%m.%d-%H%M%S"`
 		echo moving ${INFOPLIST_GIT_PATH} to /private/tmp/${INFOPLIST_DATE_PREFIX}-${INFOPLIST_BASENAME} in case you did not want to revert it
 		cp -p ${INFOPLIST_GIT_PATH} /private/tmp/${INFOPLIST_DATE_PREFIX}-${INFOPLIST_BASENAME}
